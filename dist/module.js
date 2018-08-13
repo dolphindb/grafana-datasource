@@ -1,19 +1,51 @@
-import {DolphinDBDatasource} from './datasource';
-import {DolphinDBDatasourceQueryCtrl} from './query_ctrl';
+'use strict';
 
-class DolphinDBConfigCtrl {}
-DolphinDBConfigCtrl.templateUrl = 'partials/config.html';
+System.register(['./datasource', './query_ctrl'], function (_export, _context) {
+  "use strict";
 
-class DolphinDBQueryOptionsCtrl {}
-DolphinDBQueryOptionsCtrl.templateUrl = 'partials/query.options.html';
+  var GenericDatasource, GenericDatasourceQueryCtrl, GenericConfigCtrl, GenericQueryOptionsCtrl, GenericAnnotationsQueryCtrl;
 
-class DolphinDBAnnotationsQueryCtrl {}
-DolphinDBAnnotationsQueryCtrl.templateUrl = 'partials/annotations.editor.html'
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
 
-export {
-  DolphinDBDatasource as Datasource,
-  DolphinDBDatasourceQueryCtrl as QueryCtrl,
-  DolphinDBConfigCtrl as ConfigCtrl,
-  DolphinDBQueryOptionsCtrl as QueryOptionsCtrl,
-  DolphinDBAnnotationsQueryCtrl as AnnotationsQueryCtrl
-};
+  return {
+    setters: [function (_datasource) {
+      GenericDatasource = _datasource.GenericDatasource;
+    }, function (_query_ctrl) {
+      GenericDatasourceQueryCtrl = _query_ctrl.GenericDatasourceQueryCtrl;
+    }],
+    execute: function () {
+      _export('ConfigCtrl', GenericConfigCtrl = function GenericConfigCtrl() {
+        _classCallCheck(this, GenericConfigCtrl);
+      });
+
+      GenericConfigCtrl.templateUrl = 'partials/config.html';
+
+      _export('QueryOptionsCtrl', GenericQueryOptionsCtrl = function GenericQueryOptionsCtrl() {
+        _classCallCheck(this, GenericQueryOptionsCtrl);
+      });
+
+      GenericQueryOptionsCtrl.templateUrl = 'partials/query.options.html';
+
+      _export('AnnotationsQueryCtrl', GenericAnnotationsQueryCtrl = function GenericAnnotationsQueryCtrl() {
+        _classCallCheck(this, GenericAnnotationsQueryCtrl);
+      });
+
+      GenericAnnotationsQueryCtrl.templateUrl = 'partials/annotations.editor.html';
+
+      _export('Datasource', GenericDatasource);
+
+      _export('QueryCtrl', GenericDatasourceQueryCtrl);
+
+      _export('ConfigCtrl', GenericConfigCtrl);
+
+      _export('QueryOptionsCtrl', GenericQueryOptionsCtrl);
+
+      _export('AnnotationsQueryCtrl', GenericAnnotationsQueryCtrl);
+    }
+  };
+});
+//# sourceMappingURL=module.js.map

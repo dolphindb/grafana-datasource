@@ -1,19 +1,19 @@
-import {DolphinDBDatasource} from './datasource';
-import {DolphinDBDatasourceQueryCtrl} from './query_ctrl';
+import {GenericDatasource} from './datasource';
+import {GenericDatasourceQueryCtrl} from './query_ctrl';
 
-class DolphinDBConfigCtrl {}
-DolphinDBConfigCtrl.templateUrl = 'partials/config.html';
+class GenericConfigCtrl {}
+GenericConfigCtrl.templateUrl = 'partials/config.html';
 
-class DolphinDBQueryOptionsCtrl {}
-DolphinDBQueryOptionsCtrl.templateUrl = 'partials/query.options.html';
+class GenericQueryOptionsCtrl {}
+GenericQueryOptionsCtrl.templateUrl = 'partials/query.options.html';
 
-class DolphinDBAnnotationsQueryCtrl {}
-DolphinDBAnnotationsQueryCtrl.templateUrl = 'partials/annotations.editor.html'
+class GenericAnnotationsQueryCtrl {}
+GenericAnnotationsQueryCtrl.templateUrl = 'partials/annotations.editor.html'
 
 export {
-  DolphinDBDatasource as Datasource,
-  DolphinDBDatasourceQueryCtrl as QueryCtrl,
-  DolphinDBConfigCtrl as ConfigCtrl,
-  DolphinDBQueryOptionsCtrl as QueryOptionsCtrl,
-  DolphinDBAnnotationsQueryCtrl as AnnotationsQueryCtrl
+  GenericDatasource as Datasource,
+  GenericDatasourceQueryCtrl as QueryCtrl,
+  GenericConfigCtrl as ConfigCtrl,
+  GenericQueryOptionsCtrl as QueryOptionsCtrl,
+  GenericAnnotationsQueryCtrl as AnnotationsQueryCtrl
 };

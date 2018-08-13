@@ -1,28 +1,104 @@
-import {QueryCtrl} from 'app/plugins/sdk';
-import './css/query-editor.css!'
+'use strict';
 
-export class DolphinDBDatasourceQueryCtrl extends QueryCtrl {
+System.register(['app/plugins/sdk', './css/query-editor.css!'], function (_export, _context) {
+  "use strict";
 
-  constructor($scope, $injector)  {
-    super($scope, $injector);
+  var QueryCtrl, _createClass, defaultSql, GenericDatasourceQueryCtrl;
 
-    this.scope = $scope;
-    this.target.target = this.target.target || 'select metric';
-    this.target.type = this.target.type || 'timeserie';
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
   }
 
-  getOptions(query) {
-    return this.datasource.metricFindQuery(query || '');
+  function _possibleConstructorReturn(self, call) {
+    if (!self) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return call && (typeof call === "object" || typeof call === "function") ? call : self;
   }
 
-  toggleEditorMode() {
-    this.target.rawQuery = !this.target.rawQuery;
+  function _inherits(subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
   }
 
-  onChangeInternal() {
-    this.panelCtrl.refresh(); // Asks the panel to refresh data.
-  }
-}
+  return {
+    setters: [function (_appPluginsSdk) {
+      QueryCtrl = _appPluginsSdk.QueryCtrl;
+    }, function (_cssQueryEditorCss) {}],
+    execute: function () {
+      _createClass = function () {
+        function defineProperties(target, props) {
+          for (var i = 0; i < props.length; i++) {
+            var descriptor = props[i];
+            descriptor.enumerable = descriptor.enumerable || false;
+            descriptor.configurable = true;
+            if ("value" in descriptor) descriptor.writable = true;
+            Object.defineProperty(target, descriptor.key, descriptor);
+          }
+        }
 
-DolphinDBDatasourceQueryCtrl.templateUrl = 'partials/query.editor.html';
+        return function (Constructor, protoProps, staticProps) {
+          if (protoProps) defineProperties(Constructor.prototype, protoProps);
+          if (staticProps) defineProperties(Constructor, staticProps);
+          return Constructor;
+        };
+      }();
 
+      defaultSql = "select [time_field] as time_sec,[field1] as serie1,[field2] as serie2 where $timeFilter order by [time_field]";
+
+      _export('GenericDatasourceQueryCtrl', GenericDatasourceQueryCtrl = function (_QueryCtrl) {
+        _inherits(GenericDatasourceQueryCtrl, _QueryCtrl);
+
+        function GenericDatasourceQueryCtrl($scope, $injector) {
+          _classCallCheck(this, GenericDatasourceQueryCtrl);
+
+          var _this = _possibleConstructorReturn(this, (GenericDatasourceQueryCtrl.__proto__ || Object.getPrototypeOf(GenericDatasourceQueryCtrl)).call(this, $scope, $injector));
+
+          _this.scope = $scope;
+          _this.target.rawSql = _this.target.rawSql || defaultSql;
+          //this.target.target = this.target.target || 'select metric';
+          _this.target.format = _this.target.format || 'time_series';
+          return _this;
+        }
+
+        _createClass(GenericDatasourceQueryCtrl, [{
+          key: 'getOptions',
+          value: function getOptions(query) {
+            return this.datasource.metricFindQuery(query || '');
+          }
+        }, {
+          key: 'toggleEditorMode',
+          value: function toggleEditorMode() {
+            this.target.rawQuery = !this.target.rawQuery;
+          }
+        }, {
+          key: 'onChangeInternal',
+          value: function onChangeInternal() {
+            this.panelCtrl.refresh(); // Asks the panel to refresh data.
+          }
+        }]);
+
+        return GenericDatasourceQueryCtrl;
+      }(QueryCtrl));
+
+      _export('GenericDatasourceQueryCtrl', GenericDatasourceQueryCtrl);
+
+      GenericDatasourceQueryCtrl.templateUrl = 'partials/query.editor.html';
+    }
+  };
+});
+//# sourceMappingURL=query_ctrl.js.map
