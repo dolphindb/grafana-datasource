@@ -42,12 +42,14 @@ export class GenericDatasource {
                     data: data
                 };
             }
-
-            for (let key in res.data.results) {
-                let queryRes = res.data.results[key];
-
+            console.log("res", res);
+            for (var key in res.data.results) {
+                var queryRes = res.data.results[key];
+                console.log("queryRes", queryRes);
                 if (queryRes.series) {
-                    for (let series of queryRes.series) {
+                    for (var i = 0; i < queryRes.series.length; i++) {
+                        console.log("queryRes.series",queryRes.series[i]);
+                        var series = queryRes.series[i];
                         data.push({
                             target: series.name,
                             datapoints: series.points,
@@ -58,7 +60,7 @@ export class GenericDatasource {
                 }
 
                 if (queryRes.tables) {
-                    for (let table of queryRes.tables) {
+                    for (var table in queryRes.tables) {
                         table.format = 'table';
                         table.refId = queryRes.refId;
                         table.meta = queryRes.meta;
@@ -67,6 +69,7 @@ export class GenericDatasource {
                 }
             }
 
+            console.log("data", data);
             return {
                 data: data
             };

@@ -81,73 +81,34 @@ System.register(['lodash'], function (_export, _context) {
                                     data: data
                                 };
                             }
-
+                            console.log("res", res);
                             for (var key in res.data.results) {
                                 var queryRes = res.data.results[key];
-
+                                console.log("queryRes", queryRes);
                                 if (queryRes.series) {
-                                    var _iteratorNormalCompletion = true;
-                                    var _didIteratorError = false;
-                                    var _iteratorError = undefined;
-
-                                    try {
-                                        for (var _iterator = queryRes.series[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                                            var series = _step.value;
-
-                                            data.push({
-                                                target: series.name,
-                                                datapoints: series.points,
-                                                refId: queryRes.refId,
-                                                meta: queryRes.meta
-                                            });
-                                        }
-                                    } catch (err) {
-                                        _didIteratorError = true;
-                                        _iteratorError = err;
-                                    } finally {
-                                        try {
-                                            if (!_iteratorNormalCompletion && _iterator.return) {
-                                                _iterator.return();
-                                            }
-                                        } finally {
-                                            if (_didIteratorError) {
-                                                throw _iteratorError;
-                                            }
-                                        }
+                                    for (var i = 0; i < queryRes.series.length; i++) {
+                                        console.log("queryRes.series", queryRes.series[i]);
+                                        var series = queryRes.series[i];
+                                        data.push({
+                                            target: series.name,
+                                            datapoints: series.points,
+                                            refId: queryRes.refId,
+                                            meta: queryRes.meta
+                                        });
                                     }
                                 }
 
                                 if (queryRes.tables) {
-                                    var _iteratorNormalCompletion2 = true;
-                                    var _didIteratorError2 = false;
-                                    var _iteratorError2 = undefined;
-
-                                    try {
-                                        for (var _iterator2 = queryRes.tables[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                                            var table = _step2.value;
-
-                                            table.format = 'table';
-                                            table.refId = queryRes.refId;
-                                            table.meta = queryRes.meta;
-                                            data.push(table);
-                                        }
-                                    } catch (err) {
-                                        _didIteratorError2 = true;
-                                        _iteratorError2 = err;
-                                    } finally {
-                                        try {
-                                            if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                                                _iterator2.return();
-                                            }
-                                        } finally {
-                                            if (_didIteratorError2) {
-                                                throw _iteratorError2;
-                                            }
-                                        }
+                                    for (var table in queryRes.tables) {
+                                        table.format = 'table';
+                                        table.refId = queryRes.refId;
+                                        table.meta = queryRes.meta;
+                                        data.push(table);
                                     }
                                 }
                             }
 
+                            console.log("data", data);
                             return {
                                 data: data
                             };
