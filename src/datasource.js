@@ -42,13 +42,11 @@ export class GenericDatasource {
                     data: data
                 };
             }
-            console.log("res", res);
+
             for (var key in res.data.results) {
                 var queryRes = res.data.results[key];
-                console.log("queryRes", queryRes);
                 if (queryRes.series) {
                     for (var i = 0; i < queryRes.series.length; i++) {
-                        console.log("queryRes.series",queryRes.series[i]);
                         var series = queryRes.series[i];
                         data.push({
                             target: series.name,
@@ -69,7 +67,6 @@ export class GenericDatasource {
                 }
             }
 
-            console.log("data", data);
             return {
                 data: data
             };
@@ -78,8 +75,8 @@ export class GenericDatasource {
 
     testDatasource() {
         return this.doRequest({
-            url: this.url + '/',
-            method: 'GET',
+            url: this.url,
+            method: 'POST',
         }).then(response => {
             if (response.status === 200) {
                 return { status: "success", message: "Data source is working", title: "Success" };
@@ -139,26 +136,14 @@ export class GenericDatasource {
 
         return this.backendSrv.datasourceRequest(options);
     }
-    interpolateVariable(value) {
-        if (typeof value === 'string') {
-            return '\'' + value + '\'';
-        }
-
-        var quotedValues = _.map(value, function (val) {
-            return '\'' + val + '\'';
-        });
-        return quotedValues.join(',');
-    }
+   
     buildQueryParameters(options) {
-        //remove placeholder targets
-        //options.targets = _.filter(options.targets, target => {
-        //  return target.target !== 'select metric';
-        //});
-
+        
         var targets = _.map(options.targets, target => {
+            var sql = target.rawSql;
+            sql = sql.replace("$__timeFilter", this.format(options.range.from) + ":" + this.format(options.range.to));
             return {
-                rawSql: this.templateSrv.replace(target.rawSql, options.scopedVars, 'regex'),
-                //target: this.templateSrv.replace(target.rawSql, options.scopedVars, 'regex'),
+                rawSql: this.templateSrv.replace(sql, options.scopedVars, 'regex'),
                 refId: target.refId,
                 hide: target.hide,
                 format: target.format || 'time_series'
@@ -166,7 +151,6 @@ export class GenericDatasource {
         });
 
         options.queries = targets;
-
         return options;
     }
 
@@ -194,4 +178,11 @@ export class GenericDatasource {
         });
     }
 
+    format(d) {
+        return d.year() + "." + this.PrefixInteger(d.month() + 1,2) + "." + this.PrefixInteger(d.date(),2) + "T" + this.PrefixInteger(d.hour(),2) + ":" + this.PrefixInteger(d.minute(),2) + ":" + this.PrefixInteger(d.second(),2) + "." + this.PrefixInteger(d.millisecond(),3);
+    }
+
+    PrefixInteger(num, length) {  
+        return (Array(length).join('0') + num).slice(-length);  
+    }
 }

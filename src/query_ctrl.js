@@ -2,7 +2,7 @@ import {QueryCtrl} from 'app/plugins/sdk';
 import './css/query-editor.css!'
 
 
-const defaultSql = "select [time_field] as time_sec,[field1] as serie1,[field2] as serie2 where $timeFilter order by [time_field]"
+const defaultSql = "select [time_field] as time_sec,[field1] as serie1,[field2] as serie2 where $timeFilter"
 export class GenericDatasourceQueryCtrl extends QueryCtrl {
 
   constructor($scope, $injector)  {
