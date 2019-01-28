@@ -58,7 +58,7 @@ System.register(['app/plugins/sdk', './css/query-editor.css!'], function (_expor
         };
       }();
 
-      defaultSql = "select [time_field] as time_sec,[field1] as serie1,[field2] as serie2 where $timeFilter order by [time_field]";
+      defaultSql = "select [time_field] as time_sec,[field1] as serie1,[field2] as serie2 where $timeFilter";
 
       _export('GenericDatasourceQueryCtrl', GenericDatasourceQueryCtrl = function (_QueryCtrl) {
         _inherits(GenericDatasourceQueryCtrl, _QueryCtrl);

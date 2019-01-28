@@ -141,9 +141,9 @@ export class GenericDatasource {
         
         var targets = _.map(options.targets, target => {
             var sql = target.rawSql;
-            sql = sql.replace("$__timeFilter", this.format(options.range.from) + ":" + this.format(options.range.to));
+            sql = sql.replace("$__timeFilter", "pair(" + this.format(options.range.from) + "," + this.format(options.range.to) + ")");
             return {
-                rawSql: this.templateSrv.replace(sql, options.scopedVars, 'regex'),
+                rawSql: sql,
                 refId: target.refId,
                 hide: target.hide,
                 format: target.format || 'time_series'
@@ -151,6 +151,7 @@ export class GenericDatasource {
         });
 
         options.queries = targets;
+        options.targets = targets;
         return options;
     }
 

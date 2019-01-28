@@ -1,247 +1,96 @@
-## Simple JSON Datasource - a generic backend datasource
+# DolphinDB API for Grafana
 
-More documentation about datasource plugins can be found in the [Docs](https://github.com/grafana/grafana/blob/master/docs/sources/plugins/developing/datasources.md).
+Grafana is an open source web-based data visualization tool that excels at dynamic display of time series data. It supports multiple data sources through plug-ins. To support the use of Grafana to display time-series data from DolphinDB in real time, DolphinDB provides dolphindb-datasource plugin and implements the HTTP data interface to Grafana. 
 
-This also serves as a living example implementation of a datasource.
+### 1. Install DolphinDB (v0.8 and above)
 
-Your backend needs to implement 4 urls:
+https://github.com/dolphindb/Tutorials_EN/blob/master/README.md
 
- * `/` should return 200 ok. Used for "Test connection" on the datasource config page.
- * `/search` used by the find metric options on the query tab in panels.
- * `/query` should return metrics based on input.
- * `/annotations` should return annotations.
- * `/tag-keys` should return tag keys for ad hoc filters.
- * `/tag-values` should return tag values for ad hoc filters.
+### 2. Install Grafana
 
-## Installation
+http://docs.grafana.org/installation/
 
-To install this plugin using the `grafana-cli` tool:
+### 3. Install grafana-dolphindb-datasource
+
+Before installing the data source plugin, please download the plugin source archive from http://www.github.com/dolphindb/grafana-datasource. Extract the plugin source to a directory under "grafanax.xx/data/plugins/", rename the directory as "dolphindb-datasource", restart Grafana, the new plugin will be loaded automatically.
+
+Next, please choose the dolphindb-datasource plugin on the Grafana settings interface, then login into the system. 
+
+ ![image](img/1.PNG)
+
+Use the following steps to set up DolphinDB data source:
+
+1. Enter "Add data source" in the interface (see image below)
+    * Name: you pick any name for the data source
+    * Type: choose DolphinDB from the drop-down menu
+    * URL: DolphinDB server URL. If DolphinDB is installed on the same machine and the port number is 8848，then URL is：```http://localhost:8848/grafana```
+2. All other options use default settings
+3. Click on "Save & Test" and wait for a green prompt showing "Success"
+
+![image](img/2.PNG)
+   
+
+### 4. Example
+
+We use a simple example to show how to display real-time data from a DolphinDB table in Grafana.
+
+#### 4.1 Create a DolphinDB data source
+
+The following script creates an in-memory table "temperatureTable" on the DolphinDB server, and writes data to the table every second for 200 seconds.
 ```
-sudo grafana-cli plugins install grafana-simple-json-datasource
-sudo service grafana-server restart
-```
-See [here](https://grafana.com/plugins/grafana-simple-json-datasource/installation) for more
-information.
-
-### Example backend implementations
-- https://github.com/bergquist/fake-simple-json-datasource
-- https://github.com/smcquay/jsonds
-- https://github.com/ContextLogic/eventmaster
-- https://gist.github.com/linar-jether/95ff412f9d19fdf5e51293eb0c09b850 (Python/pandas backend)
-
-### Query API
-
-Example `timeserie` request
-``` javascript
-{
-  "panelId": 1,
-  "range": {
-    "from": "2016-10-31T06:33:44.866Z",
-    "to": "2016-10-31T12:33:44.866Z",
-    "raw": {
-      "from": "now-6h",
-      "to": "now"
-    }
-  },
-  "rangeRaw": {
-    "from": "now-6h",
-    "to": "now"
-  },
-  "interval": "30s",
-  "intervalMs": 30000,
-  "targets": [
-     { "target": "upper_50", "refId": "A", "type": "timeserie" },
-     { "target": "upper_75", "refId": "B", "type": "timeserie" }
-  ],
-  "adhocFilters": [
-    "key": "City"
-    "operator": "=",
-    "value": "Berlin"
-  ]
-  "format": "json",
-  "maxDataPoints": 550
+n=100000
+t1=streamTable(n:0, `temperature`ts,[DOUBLE,TIMESTAMP])
+share t1 as temperatureTable
+t1=NULL
+def writeData(){
+	for (i in 0:200) {
+		data = table(rand(35..50,1) as temperature, now() as ts)
+		temperatureTable.append!(data)
+		sleep(1000)
+	}
 }
+submitJob("jobId","writeDataToStreamingTable",writeData)
 ```
 
-Example `timeserie` response
-``` javascript
-[
-  {
-    "target":"upper_75", // The field being queried for
-    "datapoints":[
-      [622,1450754160000],  // Metric value as a float , unixtimestamp in milliseconds
-      [365,1450754220000]
-    ]
-  },
-  {
-    "target":"upper_90",
-    "datapoints":[
-      [861,1450754160000],
-      [767,1450754220000]
-    ]
-  }
-]
+#### 4.2 Graph panel query
+
+Create a Graph type panel in Grafana Dashboard, click "edit" to enter the panel editing interface on the panel header drop-down menu, switch to the "metrics" tab and select the aforementioned DolphinDB data source, add the following query:
+```
+select gmtime(ts) as time_sec,temperature as serie1 from temperatureTable where ts> now()-5*60*1000
 ```
 
-If the metric selected is `"type": "table"`, an example `table` response:
-``` json
-[
-  {
-    "columns":[
-      {"text":"Time","type":"time"},
-      {"text":"Country","type":"string"},
-      {"text":"Number","type":"number"}
-    ],
-    "rows":[
-      [1234567,"SE",123],
-      [1234567,"DE",231],
-      [1234567,"US",321]
-    ],
-    "type":"table"
-  }
-]
+Save the panel, go back to the dashboard, set the timed refresh and the length of the data period in the upper right corner, you can see the real-time temperature change chart.
+
+For more information about Grafana, please refer to [Grafana official tutorial](http://docs.grafana.org/guides/getting_started/)
+
+
+### 5. About temporal data
+
+#### 5.1 UTC time zone conversion
+
+Since the default timezone of Grafana dashboards is UTC, Grafana assumes all input temporal data are UTC time. You should convert temporal data from your local time zone to UTC with DolphinDB function `gmtime` before using Grafana. 
+
+Generate UTC time in DolphinDB:
 ```
-
-### Annotation API
-
-The annotation request from the Simple JSON Datasource is a POST request to
-the `/annotations` endpoint in your datasource. The JSON request body looks like this:
-``` javascript
-{
-  "range": {
-    "from": "2016-04-15T13:44:39.070Z",
-    "to": "2016-04-15T14:44:39.070Z"
-  },
-  "rangeRaw": {
-    "from": "now-1h",
-    "to": "now"
-  },
-  "annotation": {
-    "name": "deploy",
-    "datasource": "Simple JSON Datasource",
-    "iconColor": "rgba(255, 96, 96, 1)",
-    "enable": true,
-    "query": "#deploy"
-  }
-}
+select gmtime(ts) as time_sec, temperature as serie1 from temperatureTable
 ```
+#### 5.2 Fetch data based on moving time interval
 
-Grafana expects a response containing an array of annotation objects in the
-following format:
+Grafana fetches data periodically in moving windows to display streaming data.
+ ![image](img/4.PNG)
 
-``` javascript
-[
-  {
-    annotation: annotation, // The original annotation sent from Grafana.
-    time: time, // Time since UNIX Epoch in milliseconds. (required)
-    title: title, // The title for the annotation tooltip. (required)
-    tags: tags, // Tags for the annotation. (optional)
-    text: text // Text for the annotation. (optional)
-  }
-]
-```
+DolphinDB provides several ways to capture data in moving windows.
 
-Note: If the datasource is configured to connect directly to the backend, you
-also need to implement an OPTIONS endpoint at `/annotations` that responds
-with the correct CORS headers:
+Fetch data in the past 5 minutes:
 
 ```
-Access-Control-Allow-Headers:accept, content-type
-Access-Control-Allow-Methods:POST
-Access-Control-Allow-Origin:*
+select gmtime(time_field), price as series1 from [table_name] where time_field>now()-5*60*1000
 ```
 
-### Search API
-
-Example request
-``` javascript
-{ target: 'upper_50' }
-```
-
-The search api can either return an array or map.
-
-Example array response
-``` javascript
-["upper_25","upper_50","upper_75","upper_90","upper_95"]
-```
-
-Example map response
-``` javascript
-[ { "text" :"upper_25", "value": 1}, { "text" :"upper_75", "value": 2} ]
-```
-
-### Tag Keys API
-
-Example request
-``` javascript
-{ }
-```
-
-The tag keys api returns:
-```javascript
-[
-    {"type":"string","text":"City"},
-    {"type":"string","text":"Country"}
-]
-```
-
-### Tag Values API
-
-Example request
-``` javascript
-{"key": "City"}
-```
-
-The tag values api returns:
-```javascript
-[
-    {'text': 'Eins!'},
-    {'text': 'Zwei'},
-    {'text': 'Drei!'}
-]
-```
-
-### Dev setup
-
-This plugin requires node 6.10.0
+Fetch data in moving windows set in Grafana:
 
 ```
-npm install -g yarn
-yarn install
-npm run build
+select gmtime(time_field), price as series1 from [table_name] where time_field between $__timeFilter
 ```
 
-### Changelog
-
-1.4.0
-
-- Support for adhoc filters:
-  - added tag-keys + tag-values api
-  - added adHocFilters parameter to query body
-
-1.3.5
-- Fix for dropdowns in query editor to allow writing template variables (broke due to change in Grafana).
-
-1.3.4
-- Adds support for With Credentials (sends grafana cookies with request) when using Direct mode
-- Fix for the typeahead component for metrics dropdown (`/search` endpoint).
-
-1.3.3
- - Adds support for basic authentication
-
-1.2.4
- - Add support returning sets in the search endpoint
-
-1.2.3
- - Allow nested templates in find metric query. #23
-
-1.2.2
- - Dont execute hidden queries
- - Template support for metrics queries
- - Template support for annotation queries
-
-### If using Grafana 2.6
-NOTE!
-for grafana 2.6 please use [this version](https://github.com/grafana/simple-json-datasource/commit/b78720f6e00c115203d8f4c0e81ccd3c16001f94)
-
-Copy the data source you want to `/public/app/plugins/datasource/`. Then restart grafana-server. The new data source should now be available in the data source type dropdown in the Add Data Source View.
+Here the macro variable `$__timeFilter` represents the interval value set in Grafana.
