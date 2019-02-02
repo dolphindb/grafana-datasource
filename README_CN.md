@@ -93,4 +93,6 @@ select gmtime(time_field),price as series1 from [table_name] where time_field > 
 ```
 select gmtime(time_field),price as series1 from [table_name] where time_field between $__timeFilter
 ```
-这里使用宏变量`$__timeFilter`来替换Grafana系统中设置的区间值。
+
+插件支持宏变量`$__timeFilter`，代表Grafana系统中设置的时间区间值。比如当前grafana中的时间轴区间是 `2018.12.18T11:14:01 - 2018.12.18T11:19:01` ，那么`$__timeFilter`在提交到DolphinDB里执行时，会被替换为`pair(2018.12.18T11:14:01,2018.12.18T11:19:01)`
+若在grafana中设置了使用UTC时间，那么请使用对应的宏变量`$__timeFilter_UTC`
