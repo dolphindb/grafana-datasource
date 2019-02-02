@@ -141,7 +141,8 @@ export class GenericDatasource {
         
         var targets = _.map(options.targets, target => {
             var sql = target.rawSql;
-            sql = sql.replace("$__timeFilter", "pair(" + this.format(options.range.from) + "," + this.format(options.range.to) + ")");
+            sql = sql.replace("$__timeFilter_UTC", "pair(" + this.format(options.range.from,true) + "," + this.format(options.range.to,true) + ")");
+            sql = sql.replace("$__timeFilter", "pair(" + this.format(options.range.from,false) + "," + this.format(options.range.to,false) + ")");
             return {
                 rawSql: sql,
                 refId: target.refId,
@@ -179,7 +180,8 @@ export class GenericDatasource {
         });
     }
 
-    format(d) {
+    format(d, isUTC) {
+        d._isUTC = isUTC;
         return d.year() + "." + this.PrefixInteger(d.month() + 1,2) + "." + this.PrefixInteger(d.date(),2) + "T" + this.PrefixInteger(d.hour(),2) + ":" + this.PrefixInteger(d.minute(),2) + ":" + this.PrefixInteger(d.second(),2) + "." + this.PrefixInteger(d.millisecond(),3);
     }
 

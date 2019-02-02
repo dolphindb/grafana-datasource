@@ -187,8 +187,8 @@ System.register(['lodash'], function (_export, _context) {
 
                         var targets = _.map(options.targets, function (target) {
                             var sql = target.rawSql;
-                            sql = sql.replace("$__timeFilter", "pair(" + _this.format(options.range.from) + "," + _this.format(options.range.to) + ")");
-                            console.log(sql);
+                            sql = sql.replace("$__timeFilter_UTC", "pair(" + _this.format(options.range.from, true) + "," + _this.format(options.range.to, true) + ")");
+                            sql = sql.replace("$__timeFilter", "pair(" + _this.format(options.range.from, false) + "," + _this.format(options.range.to, false) + ")");
                             return {
                                 rawSql: sql,
                                 refId: target.refId,
@@ -233,7 +233,8 @@ System.register(['lodash'], function (_export, _context) {
                     }
                 }, {
                     key: 'format',
-                    value: function format(d) {
+                    value: function format(d, isUTC) {
+                        d._isUTC = isUTC;
                         return d.year() + "." + this.PrefixInteger(d.month() + 1, 2) + "." + this.PrefixInteger(d.date(), 2) + "T" + this.PrefixInteger(d.hour(), 2) + ":" + this.PrefixInteger(d.minute(), 2) + ":" + this.PrefixInteger(d.second(), 2) + "." + this.PrefixInteger(d.millisecond(), 3);
                     }
                 }, {
