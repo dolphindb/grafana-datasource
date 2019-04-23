@@ -4,7 +4,10 @@
       <select class="gf-form-input" ng-model="ctrl.target.format" ng-options="f as f for f in ['table', 'time_series']"></select>
     </div>
     <div class="gf-form gf-form--grow">
-        <input type="text" ng-model="ctrl.target.rawSql" class="gf-form-input gf-form--grow" placeholder="select timestamp(time) as time_sec,[series_field1] as series1,... from [table_name]" content="ctrl.targets.rawSql" datasource="ctrl.datasource" ng-blur="ctrl.onChangeInternal()"/>
+		<div class="gf-form gf-form--grow">
+			<code-editor content="ctrl.target.rawSql" datasource="ctrl.datasource" on-change="ctrl.panelCtrl.refresh()" data-mode="sql">
+			</code-editor>
+		</div>
     </div>
     <!-- <div ng-if="ctrl.target.rawQuery">
       <div class="gf-form gf-form--grow">
