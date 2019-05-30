@@ -13,7 +13,8 @@ Grafana是一个开源的基于web的数据展示工具，擅长动态展示时�
 http://docs.grafana.org/installation/
 
 ### 3 安装 grafana-dolphindb-datasource
-在安装数据源插件之前，请从http://www.github.com/dolphindb/grafana-datasource下载插件源码压缩包，将插件源码解压到"grafanax.xx/data/plugins/"目录之下的一个目录，然后把该目录重命名为"dolphindb-datasource"。重启Grafana，新插件会被自动载入。
+在安装数据源插件之前，请从 http://www.github.com/dolphindb/grafana-datasource 
+下载插件源码压缩包，将插件源码解压到"grafanax.xx/data/plugins/"目录之下的一个目录，然后把该目录重命名为"dolphindb-datasource"。重启Grafana，新插件会被自动载入。
 
 接下来可以通过Grafana的设置界面配置dolphindb-datasource插件以设置数据源。具体步骤如下：
 
