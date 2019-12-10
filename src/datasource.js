@@ -58,7 +58,8 @@ export class GenericDatasource {
                 }
 
                 if (queryRes.tables) {
-                    for (var table in queryRes.tables) {
+                    for (var i = 0;i < queryRes.tables.length; i++) {
+                        var table = queryRes.tables[i];
                         table.format = 'table';
                         table.refId = queryRes.refId;
                         table.meta = queryRes.meta;
