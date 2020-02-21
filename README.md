@@ -1,6 +1,6 @@
 # DolphinDB API for Grafana
 
-Grafana is an open source web-based data visualization tool that excels at dynamic display of time series data. It supports multiple data sources through plug-ins. To support the use of Grafana to display time-series data from DolphinDB in real time, DolphinDB provides dolphindb-datasource plugin and implements the HTTP data interface to Grafana. 
+Grafana is an open source web-based data visualization tool that excels at dynamic display of time-series data. It supports multiple data sources through plug-ins. To support the use of Grafana to display time-series data from DolphinDB in real time, DolphinDB provides dolphindb-datasource plugin and implements the HTTP data interface to Grafana. 
 
 ### 1. Install DolphinDB (v0.8 and above)
 
@@ -12,18 +12,18 @@ http://docs.grafana.org/installation/
 
 ### 3. Install grafana-dolphindb-datasource
 
-Before installing the data source plugin, please download the plugin source archive from http://www.github.com/dolphindb/grafana-datasource. Extract the plugin source to a directory under "grafanax.xx/data/plugins/", rename the directory as "dolphindb-datasource", restart Grafana, the new plugin will be loaded automatically.
+Before installing the data source plugin, please download the plugin source archive from http://www.github.com/dolphindb/grafana-datasource. Extract the plugin source to a directory under "grafanax.xx/data/plugins/", rename the directory as "dolphindb-datasource" and restart Grafana. The new plugin will be loaded automatically.
 
-Next, please choose the dolphindb-datasource plugin on the Grafana settings interface, then login into the system. 
+Next, please choose the dolphindb-datasource plugin on the Grafana settings interface, then log into the system. 
 
  ![image](img/1.PNG)
 
 Use the following steps to set up DolphinDB data source:
 
 1. Enter "Add data source" in the interface (see image below)
-    * Name: you pick any name for the data source
+    * Name: you can pick any name for the data source
     * Type: choose DolphinDB from the drop-down menu
-    * URL: DolphinDB server URL. If DolphinDB is installed on the same machine and the port number is 8848，then URL is：```http://localhost:8848/grafana```
+    * URL: DolphinDB server URL. If DolphinDB is installed on the same machine and the port number is 8848, then the URL is：```http://localhost:8848/grafana```
 2. All other options use default settings
 3. Click on "Save & Test" and wait for a green prompt showing "Success"
 
@@ -36,7 +36,7 @@ We use a simple example to show how to display real-time data from a DolphinDB t
 
 #### 4.1 Create a DolphinDB data source
 
-The following script creates an in-memory table "temperatureTable" on the DolphinDB server, and writes data to the table every second for 200 seconds.
+The following script creates an in-memory table 'temperatureTable' on the DolphinDB server, and writes data to the table every second for 200 seconds.
 ```
 n=100000
 t1=streamTable(n:0, `temperature`ts,[DOUBLE,TIMESTAMP])
@@ -54,12 +54,12 @@ submitJob("jobId","writeDataToStreamingTable",writeData)
 
 #### 4.2 Graph panel query
 
-Create a Graph type panel in Grafana Dashboard, click "edit" to enter the panel editing interface on the panel header drop-down menu, switch to the "metrics" tab and select the aforementioned DolphinDB data source, add the following query:
+Follow these steps to create a Graph type panel on Grafana Dashboard: click "edit" to enter the panel editing interface on the panel header drop-down menu, switch to the "metrics" tab and select the aforementioned DolphinDB data source, then add the following query:
 ```
 select gmtime(ts) as time_sec,temperature as serie1 from temperatureTable where ts> now()-5*60*1000
 ```
 
-Save the panel, go back to the dashboard, set the timed refresh and the length of the data period in the upper right corner, you can see the real-time temperature change chart.
+Save the panel, go back to the dashboard, set refreshing frequency and window length by clicking in the upper right corner, then you can see the real-time temperature chart.
 
 For more information about Grafana, please refer to [Grafana official tutorial](http://docs.grafana.org/guides/getting_started/)
 
@@ -68,13 +68,13 @@ For more information about Grafana, please refer to [Grafana official tutorial](
 
 #### 5.1 UTC time zone conversion
 
-Since the default timezone of Grafana dashboards is UTC, Grafana assumes all input temporal data are UTC time. You should convert temporal data from your local time zone to UTC with DolphinDB function `gmtime` before using Grafana. 
+Grafana assumes all input temporal data are UTC time. You should convert temporal data from your local time zone to UTC with DolphinDB function `gmtime` before using Grafana. 
 
 Generate UTC time in DolphinDB:
 ```
 select gmtime(ts) as time_sec, temperature as serie1 from temperatureTable
 ```
-#### 5.2 Fetch data based on moving time interval
+#### 5.2 Fetch data based on moving windows
 
 Grafana fetches data periodically in moving windows to display streaming data.
  ![image](img/4.PNG)
