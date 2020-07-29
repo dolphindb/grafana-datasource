@@ -54,7 +54,7 @@ System.register(['lodash'], function (_export, _context) {
                 _createClass(GenericDatasource, [{
                     key: 'query',
                     value: function query(options) {
-                        var query = this.buildQueryParameters(options);
+                        var query = this.buildQueryParameters(options, this.templateSrv);
                         query.targets = query.targets.filter(function (t) {
                             return !t.hide;
                         });
@@ -183,13 +183,15 @@ System.register(['lodash'], function (_export, _context) {
                     }
                 }, {
                     key: 'buildQueryParameters',
-                    value: function buildQueryParameters(options) {
+                    value: function buildQueryParameters(options, templateSrv) {
                         var _this = this;
 
                         var targets = _.map(options.targets, function (target) {
                             var sql = target.rawSql;
                             sql = sql.replace("$__timeFilter_UTC", "pair(" + _this.format(options.range.from, true) + "," + _this.format(options.range.to, true) + ")");
                             sql = sql.replace("$__timeFilter", "pair(" + _this.format(options.range.from, false) + "," + _this.format(options.range.to, false) + ")");
+                            //support variables
+                            sql = templateSrv.replace(sql, options.scopedVars);
                             return {
                                 rawSql: sql,
                                 refId: target.refId,

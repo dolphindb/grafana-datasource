@@ -17,7 +17,7 @@ export class GenericDatasource {
     }
 
     query(options) {
-        var query = this.buildQueryParameters(options);
+        var query = this.buildQueryParameters(options, this.templateSrv);
         query.targets = query.targets.filter(t => !t.hide);
 
         if (query.targets.length <= 0) {
@@ -138,12 +138,14 @@ export class GenericDatasource {
         return this.backendSrv.datasourceRequest(options);
     }
    
-    buildQueryParameters(options) {
+    buildQueryParameters(options, templateSrv) {
         
         var targets = _.map(options.targets, target => {
             var sql = target.rawSql;
             sql = sql.replace("$__timeFilter_UTC", "pair(" + this.format(options.range.from,true) + "," + this.format(options.range.to,true) + ")");
             sql = sql.replace("$__timeFilter", "pair(" + this.format(options.range.from,false) + "," + this.format(options.range.to,false) + ")");
+            //support variables
+            sql = templateSrv.replace(sql, options.scopedVars);
             return {
                 rawSql: sql,
                 refId: target.refId,
