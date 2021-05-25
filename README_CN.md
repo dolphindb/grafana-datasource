@@ -13,22 +13,42 @@ Grafana是一个开源的基于web的数据展示工具，擅长动态展示时�
 http://docs.grafana.org/installation/
 
 ### 3 安装 grafana-dolphindb-datasource
-在安装数据源插件之前，请从 http://www.github.com/dolphindb/grafana-datasource 下载插件源码压缩包，将插件源码解压到"grafanax.xx/data/plugins/"目录之下的一个目录，然后把该目录重命名为"dolphindb-datasource"。重启Grafana，新插件会被自动载入。
+首先从 http://www.github.com/dolphindb/grafana-datasource 下载插件源码压缩包，将插件源码解压到"grafanax.xx/data/plugins/"目录之下，然后把该子目录重命名为"dolphindb-datasource"。修改后目录如下(以windows下安装为例)：
+```
+D:\Program Files\GrafanaLabs\grafana\data\plugins>tree
+D:.
+└─dolphindb-datasource
+    ├─.vs
+    │  ├─config
+    │  └─dolphindb-datasource
+    │      └─v15
+    ├─dist
+    │  ├─css
+    │  ├─img
+    │  └─partials
+    ├─img
+    ├─spec
+    └─src
+        ├─css
+        ├─img
+        └─partials
+```
 
-接下来可以通过Grafana的设置界面配置dolphindb-datasource插件以设置数据源。具体步骤如下：
+源码放好后，需要重启一下Grafana服务。譬如在Win10上，可以打开windows任务管理器，在如下图所示服务页，找到Grafana服务后右键点击并选择重启启动。
 
-- 登录进入系统，界面如下
+![restartGrafana](img/restartGrafana.PNG?raw=true)
 
- ![image](img/1.PNG)
+配置dolphindb-datasource插件以设置数据源，如下图所示，先登录系统，然后点击图中的红色大圈所在位置"Add your first data source"或红色小圈所在位置"Configuration/Data sources"，进入后再点击"Add data source":
 
-- 进入"Add data source"界面，如图
+![datasource1](img/ds1.png?raw=true)
 
-![image](img/2.PNG)
-- name: data source的名称，可以随意取。
-- type下拉列表中请选择DolphinDB
-- 若DolphinDB安装在本机，node端口为8848，那么url可设置成：```http://localhost:8848/grafana```
-- 其他选项保持默认值
-- 点击"Save & Test", 出现绿色的提示成功
+在下图所示界面中选择DolphinDB：
+
+![datasource1](img/ds2.png?raw=true)
+
+进入"Add data source"界面，设置url为DolphinDB节点IP以及端口号，其他默认，然后点击"Save & Test"，出现绿色的提示成功，如下图所示：
+
+![datasource1](img/grafanaAddDS.PNG?raw=true)
 
 ### 4 实例
 
@@ -55,13 +75,19 @@ submitJob("jobId","writeDataToStreamingTable",writeData)
 ```
 
 #### 4.2 设计Grafana的图形面板及数据查询语句
- 
-首先在dashboard里创建一个Graph类型的panel，通过panel header下拉菜单点击"edit"进入panel编辑界面，切换到"metrics"页面 选择定义好的DolphinDB数据源后，数据源下方会出现一个用于输入脚本的文本输入框，输入以下查询语句以读取前5分钟的数据。
+
+首先在Grafana的Home界面点击"Create Dashboard"，然后点击"Add new panel"，在如下图所示界面的 Query options 中选择DolphinDB数据源后，数据源下方会出现一个用于输入脚本的文本输入框，输入以下查询语句以读取前5分钟的数据。
 ```
 
 select gmtime(ts) as time_sec, temperature as serie1 from temperatureTable where ts>now()-5*60*1000
 ```
-保存并回到dashboard，在右上角设置定时刷新及数据时间段的长度，就可以看到实时的温度变化走势图。
+在右上角设置定时刷新及数据时间段的长度，就可以看到实时的温度变化走势图。
+![datasource1](img/newDashboard.png?raw=true)
+
+注意，若是查询分布式表，需要在SQL语句中先login。例如：
+```
+login('admin', '123456'); select gmtime(timestamp(datetime)) as time_sec, tag1  from loadTable('dfs://iot', 'equip') where equipNo=1 and datetime> now().datetime()-5*60
+```
 
 具体Grafana操作，可以参考[Grafana官方教程](http://docs.grafana.org/guides/getting_started/)
 
