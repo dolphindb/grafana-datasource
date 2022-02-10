@@ -1,5 +1,7 @@
 Grafana是一个开源的基于web的数据展示工具，擅长动态展示时序数据。它内部支持多种数据源，也支持以插件方式对数据源进行扩展。DolphinDB为了支持使用Grafana来实时展示时序数据，提供了Grafana的dolphindb-datasource插件，并且实现了对Grafana的HTTP数据接口，可以通过类SQL的查询脚本将DolphinDB的数据表以直观的方式展示在Grafana的Dashboard上。
 
+请注意：目前，dolphindb-datasource插件可支持的grafana最高版本为7.2.2，暂不支持更高版本的grafana。
+
 ### 1 安装DolphinDB
 
 参考以下文档：
