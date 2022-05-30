@@ -1,0 +1,23 @@
+@font-face
+    font-family: 'MyFont'
+    src: local('MyFont'), url('/public/plugins/dolphindb-datasource/myfont.woff2')
+
+@font-face
+    font-family: 'MyFont'
+    src: local('MyFont Bold'), url('/public/plugins/dolphindb-datasource/myfontb.woff2')
+    font-weight: bold
+
+.query-editor
+    .monaco-editor
+        .line-numbers
+            color: #888888
+        
+        .active-line-number.line-numbers
+            color: #444444
+    
+.variable-query-editor
+    .query-actions
+        margin-top: 4px
+        display: flex
+        justify-content: right
+    

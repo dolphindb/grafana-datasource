@@ -1,0 +1,16 @@
+node_modules/
+
+/out/
+/fonts
+
+/*.js
+*.map
+*.d.ts
+
+/docs.zh.json
+/docs.en.json
+
+/i18n/untranslateds.json
+/i18n/stats.json
+
+/dolphindb-datasource.*.zip

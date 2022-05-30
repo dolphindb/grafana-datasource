@@ -1,0 +1,47 @@
+{
+    "自动登录": {
+        "en": "Autologin"
+    },
+    "是否在建立连接后自动登录，默认 true": {
+        "en": "Whether to automatically log in after the connection is established, the default is true"
+    },
+    "用户名": {
+        "en": "Username"
+    },
+    "密码": {
+        "en": "Password"
+    },
+    "DolphinDB 登录用户名": {
+        "en": "DolphinDB username"
+    },
+    "DolphinDB 登录密码": {
+        "en": "DolphinDB password"
+    },
+    "使用 Python Parser 来解释执行脚本, 默认 false": {
+        "en": "Use Python Parser to interpret and execute scripts, the default is false"
+    },
+    "数据库连接地址 (WebSocket URL), 如: ws://127.0.0.1:8848, wss://dolphindb.com (HTTPS 加密)": {
+        "en": "Database connection URL (WebSocket URL), e.g. ws://127.0.0.1:8848, wss://dolphindb.com (HTTPS encrypted)"
+    },
+    "DolphinDB Grafana 插件已加载": {
+        "en": "DolphinDB Grafana plugin loaded"
+    },
+    "已连接到数据库": {
+        "en": "Connected to database"
+    },
+    "{{message}};\n无法通过 WebSocket 连接到 {{url}}，请检查 url, DataSource 配置、网络连接状况 (是否配置代理，代理是否支持 WebSocket)、server 是否启动、server 版本不低于 1.30.16 或 2.00.4": {
+        "en": "{{message}};\nUnable to connect to {{url}} through WebSocket, please check the url, DataSource configuration, network connection status (whether proxy is configured, whether the proxy supports WebSocket), whether the server is started, and the server version is not lower than 1.30.16 or 2.00.4"
+    },
+    "Query 的返回值不是标量、向量或只含一个向量的表格": {
+        "en": "Query return value is not a scalar, a vector, or a table containing only one vector"
+    },
+    "通过执行脚本生成变量选项，脚本的最后一条语句应返回标量、向量、或者只含一个向量的表格": {
+        "en": "Generate variable options by executing the script, the last statement of the script should return a scalar, a vector, or a table containing only one vector"
+    },
+    "暂存查询并更新预览": {
+        "en": "Stage the query and update the preview"
+    },
+    "Query 代码的最后一条语句需要返回 table，实际返回的是: {{value}}": {
+        "en": "The last statement of the Query code needs to return a table, the actual return is: {{value}}"
+    }
+}
