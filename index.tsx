@@ -603,7 +603,8 @@ function QueryEditor (
             code,
             refId
         },
-        onChange
+        onChange,
+        onRunQuery,
     }: QueryEditorProps<DataSource, DdbDataQuery, DataSourceJsonData> & { height?: number }
 ) {
     const { isDark } = useTheme2()
@@ -973,9 +974,11 @@ function QueryEditor (
                 ;(monaco as any).inited = true
             }}
             
-            // onSave={(value) => {
-            //     console.log('onSave', value)
-            // }}
+            { ... onRunQuery ? {
+                onSave (code) {
+                    onRunQuery()
+                }
+            } : { } }
             
             onEditorDidMount={(editor, monaco) => {
                 editor.setValue(code || '')

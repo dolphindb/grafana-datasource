@@ -29,6 +29,7 @@ export async function copy_files () {
         ... ([
             'plugin.json',
             'README.md',
+            'README.zh.md',
             'logo.svg',
         ] as const).map(async fname => 
             fcopy(fpd_root + fname, fpd_out + fname))
