@@ -72,7 +72,8 @@ Open http://localhost:3000/datasources or click `Configuration > Data sources` i
 ### 3. Create a new Panel, write query scripts, and visualize DolphinDB time series data
 Open or create a new Dashboard, edit or create a new Panel, select the data source added in the previous step in the Data source property of the Panel
 Write a query script, the last statement of the code needs to return a table
-After writing, press `ctrl + s` to save, or click the refresh button on the page (Refresh dashboard), you can send the Query to the DolphinDB database to run and display the chart
+After writing, press `ctrl + s` to save, or click the refresh button on the page (Refresh dashboard), you can send the Query to the DolphinDB database to run and display the chart  
+The height of the code editing box can be adjusted by dragging the bottom
 
 The dolphindb-datasource plugin supports the `$__timeFilter` variable, which is the time axis range above the panel
 For example, the current time axis interval is `2022-02-15 00:00:00 - 2022.02.17 00:00:00` , then `$__timeFilter` in the code will be replaced with `pair(2022.02.15 00:00 :00.000, 2022.02.17 00:00:00.000)`

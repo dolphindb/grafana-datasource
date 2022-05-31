@@ -8,12 +8,16 @@
     font-weight: bold
 
 .query-editor
-    .monaco-editor
-        .line-numbers
-            color: #888888
+    .resizable
+        > div
+            height: 100%
         
-        .active-line-number.line-numbers
-            color: #444444
+        .monaco-editor
+            .line-numbers
+                color: #888888
+            
+            .active-line-number.line-numbers
+                color: #444444
     
 .variable-query-editor
     .query-actions

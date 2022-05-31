@@ -72,7 +72,8 @@ http://localhost:3000/admin/plugins?filterBy=all&filterByType=all&q=dolphindb
 ### 3. 新建 Panel, 编写查询脚本, 可视化 DolphinDB 时序数据
 打开或新建 Dashboard, 编辑或新建 Panel, 在 Panel 的 Data source 属性中选择上一步添加的数据源  
 编写查询脚本，代码的最后一条语句需要返回 table  
-编写完成后按 `ctrl + s` 保存，或者点击页面中的刷新按钮 (Refresh dashboard)，可以将 Query 发到 DolphinDB 数据库运行并展示出图表
+编写完成后按 `ctrl + s` 保存，或者点击页面中的刷新按钮 (Refresh dashboard)，可以将 Query 发到 DolphinDB 数据库运行并展示出图表  
+代码编辑框的高度可以拖动底部调整
 
 dolphindb-datasource 插件支持 `$__timeFilter` 变量，值为面板上方的时间轴区间  
 比如当前的时间轴区间是 `2022-02-15 00:00:00 - 2022.02.17 00:00:00` ，那么代码中的 `$__timeFilter` 会被替换为 `pair(2022.02.15 00:00:00.000, 2022.02.17 00:00:00.000)`
