@@ -2,6 +2,8 @@ import './index.sass'
 
 import { default as React, useRef } from 'react'
 
+import { Resizable } from 're-resizable'
+
 import { getTemplateSrv } from '@grafana/runtime'
 import {
     DataSourcePlugin,
@@ -45,6 +47,7 @@ import {
     timestamp2ms,
     nanotime2ns,
     nanotimestamp2ns,
+    nulls,
     type DdbVectorValue,
     type DdbValue,
     type DdbSymbolExtendedValue,
@@ -109,7 +112,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
     constructor (settings: DataSourceInstanceSettings<DataSourceConfig>) {
         super(settings)
         
-        console.log('new DolphinDB.DataSource', settings)
+        console.log('new DolphinDB.DataSource:', settings)
         
         this.settings = settings
         
@@ -143,7 +146,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
     
     
     override async query (request: DataQueryRequest<DdbDataQuery>): Promise<DataQueryResponse> {
-        console.log('query.request', request)
+        console.log('query.request:', request)
         
         const {
             range: {
@@ -163,26 +166,29 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                     
                     code ||= ''
                     
-                    console.log(`${refId}.query`, query)
+                    console.log(`${refId}.query:`, query)
                     
                     if (hide || !code.trim())
                         return new MutableDataFrame({ refId, fields: [ ] })
                     
-                    const table = await this.ddb.eval<DdbObj<DdbObj<DdbVectorValue>[]>>(
-                        getTemplateSrv()
-                            .replace(
-                                code.replaceAll(
-                                    /\$(__)?timeFilter\b/g,
-                                    'pair(' +
-                                        from.format('YYYY.MM.DD HH:mm:ss.SSS') + 
-                                        ', ' +
-                                        to.format('YYYY.MM.DD HH:mm:ss.SSS') +
-                                    ')'
-                                ),
-                                { },
-                                var_formatter
-                            )
-                    )
+                    const code_ = getTemplateSrv()
+                        .replace(
+                            code.replaceAll(
+                                /\$(__)?timeFilter\b/g,
+                                'pair(' +
+                                    from.format('YYYY.MM.DD HH:mm:ss.SSS') + 
+                                    ', ' +
+                                    to.format('YYYY.MM.DD HH:mm:ss.SSS') +
+                                ')'
+                            ),
+                            { },
+                            var_formatter
+                        )
+                    
+                    console.log(`${refId}.code:`)
+                    console.log(code_)
+                    
+                    const table = await this.ddb.eval<DdbObj<DdbObj<DdbVectorValue>[]>>(code_)
                     
                     if (table.form !== DdbForm.table)
                         throw new Error(t('Query 代码的最后一条语句需要返回 table，实际返回的是: {{value}}', { value: table.toString() }))
@@ -191,9 +197,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                         refId,
                         
                         fields: table.value.map(col => {
-                            const { type, value, rows, name: colname } = col
-                            
-                            const name = `${refId}.${colname}`
+                            const { type, value, rows, name } = col
                             
                             switch (type) {
                                 // --- boolean
@@ -310,20 +314,38 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                                 
                                 // --- number
                                 case DdbType.short:
+                                    return {
+                                        name,
+                                        type: FieldType.number,
+                                        values: [...value as Int16Array].map(x => x === nulls.int16 ? null : x)
+                                    }
+                                
                                 case DdbType.int:
+                                    return {
+                                        name,
+                                        type: FieldType.number,
+                                        values: [...value as Int32Array].map(x => x === nulls.int32 ? null : x)
+                                    }
+                                
                                 case DdbType.float:
+                                    return {
+                                        name,
+                                        type: FieldType.number,
+                                        values: [...value as Float32Array].map(x => x === nulls.float32 ? null : x)
+                                    }
+                                
                                 case DdbType.double:
                                     return {
                                         name,
                                         type: FieldType.number,
-                                        values: [...value as Int32Array | Int16Array | Float32Array | Float64Array]
+                                        values: [...value as Float64Array].map(x => x === nulls.double ? null : x)
                                     }
                                 
                                 case DdbType.long:
                                     return {
                                         name,
                                         type: FieldType.number,
-                                        values: [...(value as BigInt64Array)].map(x => Number(x))
+                                        values: [...(value as BigInt64Array)].map(x => x === nulls.int64 ? null : Number(x))
                                     }
                                 
                                 
@@ -598,12 +620,13 @@ function ConfigEditor ({
 
 function QueryEditor (
     {
-        height = 300,
+        height = 260,
         query: {
             code,
             refId
         },
-        onChange
+        onChange,
+        onRunQuery,
     }: QueryEditorProps<DataSource, DdbDataQuery, DataSourceJsonData> & { height?: number }
 ) {
     const { isDark } = useTheme2()
@@ -614,393 +637,401 @@ function QueryEditor (
             <FormField labelWidth={8} label='Query Text' tooltip='Not used yet' />
         </div> */}
         
-        <CodeEditor
-            height={height}
-            
-            language='dolphindb'
-            
-            showLineNumbers
-            
-            value=''
-            
-            monacoOptions={{
-                minimap: {
-                    enabled: false
-                },
+        <Resizable
+            className='resizable'
+            defaultSize={{ height, width: 'auto' }}
+            enable={{ top: false, right: false, bottom: true, left:false, topRight: false, bottomRight: false, bottomLeft: false, topLeft: false }}
+        >
+            <CodeEditor
+                height='100%'
                 
-                fontFamily: 'MyFont',
-                fontSize: 16,
-                insertSpaces: true,
-                codeLensFontFamily: 'MyFont',
-                folding: true,
-                largeFileOptimizations: true,
-                matchBrackets: 'always',
-                smoothScrolling: false,
-                suggest: {
-                    insertMode: 'replace',
-                    snippetsPreventQuickSuggestions: false,
-                },
+                language='dolphindb'
                 
-                wordBasedSuggestions: true,
+                showLineNumbers
                 
-                mouseWheelZoom: true,
-                guides: {
-                    indentation: false,
-                    bracketPairs: false,
-                    highlightActiveIndentation: false,
-                },
+                value=''
                 
-                detectIndentation: true,
-                tabSize: 4,
-                
-                codeLens: true,
-                roundedSelection: false,
-                wordWrap: 'on',
-                
-                scrollBeyondLastLine: false,
-                scrollbar: {
-                    vertical: 'visible'
-                },
-                
-                find: {
-                    loop: true,
-                    seedSearchStringFromSelection: 'selection',
-                },
-                
-                acceptSuggestionOnCommitCharacter: false,
-                
-                mouseWheelScrollSensitivity: 2,
-                dragAndDrop: false,
-                renderControlCharacters: true,
-                lineNumbers: 'on',
-                showFoldingControls: 'mouseover',
-                foldingStrategy: 'indentation',
-                accessibilitySupport: 'off',
-                autoIndent: 'advanced',
-                snippetSuggestions: 'none',
-                renderLineHighlight: 'none',
-                trimAutoWhitespace: false,
-                hideCursorInOverviewRuler: true,
-                renderWhitespace: 'none',
-                overviewRulerBorder: true,
-                
-                gotoLocation: {
-                    multipleDeclarations: 'peek',
-                    multipleTypeDefinitions: 'peek',
-                    multipleDefinitions: 'peek',
-                },
-                
-                foldingHighlight: false,
-                unfoldOnClickAfterEndOfLine: true,
-                
-                inlayHints: {
-                    enabled: false,
-                },
-                
-                acceptSuggestionOnEnter: 'off',
-                
-                quickSuggestions: {
-                    other: true,
-                    comments: true,
-                    strings: true,
-                },
-            }}
-            
-            onBeforeEditorMount={monaco => {
-                if ((monaco as any).inited)
-                    return
-                
-                let { languages, editor } = monaco
-                const { CompletionItemKind } = languages
-                
-                languages.register({
-                    id: 'dolphindb',
-                    // configuration: ''
-                })
-                
-                languages.setMonarchTokensProvider('dolphindb', {
-                    defaultToken: 'invalid',
+                monacoOptions={{
+                    minimap: {
+                        enabled: false
+                    },
                     
-                    keywords,
+                    fontFamily: 'MyFont',
+                    fontSize: 16,
+                    insertSpaces: true,
+                    codeLensFontFamily: 'MyFont',
+                    folding: true,
+                    largeFileOptimizations: true,
+                    matchBrackets: 'always',
+                    smoothScrolling: false,
+                    suggest: {
+                        insertMode: 'replace',
+                        snippetsPreventQuickSuggestions: false,
+                    },
                     
-                    operators: [
-                        '||', '&&',
-                        '<=', '==', '>=', '!=',
-                        '<<', '>>',
-                        '**', '<-', '->', '..',
-                        '<', '>', '|', '^', '&', '+', '-', '*', '/', '\\', '%', '$', ':', '!', '.'
-                    ],
+                    wordBasedSuggestions: true,
                     
-                    tokenizer: {
-                        root: [
-                            [/\/\/.*$/, 'comment'],
-                            
-                            [/'(.*?)'/, 'string'],
-                            [/"(.*?)"/, 'string'],
-                            
-                            [/\w+!? ?(?=\()/, 'call'],
-                            
-                            [/\d+/, 'number'],
-                            
-                            [/\w+( join| by)?/, { cases: { '@keywords': 'keyword' } }],
-                            
-                            [/[!$%^&*|<=>\\.]+/, { cases: { '@operators': 'operator' } }],
-                            
-                            [/[;,.]/, 'delimiter'],
+                    mouseWheelZoom: true,
+                    guides: {
+                        indentation: false,
+                        bracketPairs: false,
+                        highlightActiveIndentation: false,
+                    },
+                    
+                    detectIndentation: true,
+                    tabSize: 4,
+                    
+                    codeLens: true,
+                    roundedSelection: false,
+                    wordWrap: 'on',
+                    
+                    scrollBeyondLastLine: false,
+                    scrollbar: {
+                        vertical: 'visible'
+                    },
+                    
+                    find: {
+                        loop: true,
+                        seedSearchStringFromSelection: 'selection',
+                    },
+                    
+                    acceptSuggestionOnCommitCharacter: false,
+                    
+                    mouseWheelScrollSensitivity: 2,
+                    dragAndDrop: false,
+                    renderControlCharacters: true,
+                    lineNumbers: 'on',
+                    showFoldingControls: 'mouseover',
+                    foldingStrategy: 'indentation',
+                    accessibilitySupport: 'off',
+                    autoIndent: 'advanced',
+                    snippetSuggestions: 'none',
+                    renderLineHighlight: 'none',
+                    trimAutoWhitespace: false,
+                    hideCursorInOverviewRuler: true,
+                    renderWhitespace: 'none',
+                    overviewRulerBorder: true,
+                    
+                    gotoLocation: {
+                        multipleDeclarations: 'peek',
+                        multipleTypeDefinitions: 'peek',
+                        multipleDefinitions: 'peek',
+                    },
+                    
+                    foldingHighlight: false,
+                    unfoldOnClickAfterEndOfLine: true,
+                    
+                    inlayHints: {
+                        enabled: false,
+                    },
+                    
+                    acceptSuggestionOnEnter: 'off',
+                    
+                    quickSuggestions: {
+                        other: true,
+                        comments: true,
+                        strings: true,
+                    },
+                }}
+                
+                onBeforeEditorMount={monaco => {
+                    if ((monaco as any).inited)
+                        return
+                    
+                    let { languages, editor } = monaco
+                    const { CompletionItemKind } = languages
+                    
+                    languages.register({
+                        id: 'dolphindb',
+                        // configuration: ''
+                    })
+                    
+                    languages.setMonarchTokensProvider('dolphindb', {
+                        defaultToken: 'invalid',
+                        
+                        keywords,
+                        
+                        operators: [
+                            '||', '&&',
+                            '<=', '==', '>=', '!=',
+                            '<<', '>>',
+                            '**', '<-', '->', '..',
+                            '<', '>', '|', '^', '&', '+', '-', '*', '/', '\\', '%', '$', ':', '!', '.'
                         ],
-                    },
-                })
-                
-                editor.defineTheme('dolphindb-theme', {
-                    base: isDark ? 'vs-dark' : 'vs',
-                    inherit: true,
-                    rules: isDark ?
-                            [
-                                { token: 'call',  foreground: '#dcdcaa', fontStyle: 'bold' },
-                                { token: 'operator', foreground: '#d4d4d4' },
-                                { token: 'invalid', foreground: '#d4d4d4' },
-                            ]
-                        :
-                            [
-                                // { token: 'keywords.dolphindb', foreground: '#ff0000' }
-                                { token: 'comment', foreground: '#000000' },
-                                { token: 'types', foreground: '#0f96be' },
-                                { token: 'operator', foreground: '#ff0000' },
-                                { token: 'invalid', foreground: '#000000' },
-                                { token: 'keyword', foreground: '#af00db' },
-                                { token: 'number', foreground: '#00a000' },
-                                { token: 'call',  foreground: '#000000', fontStyle: 'bold' },
+                        
+                        tokenizer: {
+                            root: [
+                                [/\/\/.*$/, 'comment'],
+                                
+                                [/'(.*?)'/, 'string'],
+                                [/"(.*?)"/, 'string'],
+                                
+                                [/\w+!? ?(?=\()/, 'call'],
+                                
+                                [/\d+/, 'number'],
+                                
+                                [/\w+( join| by)?/, { cases: { '@keywords': 'keyword' } }],
+                                
+                                [/[!$%^&*|<=>\\.]+/, { cases: { '@operators': 'operator' } }],
+                                
+                                [/[;,.]/, 'delimiter'],
                             ],
-                    colors: {
-                        
-                    }
-                })
-                
-                editor.setTheme('dolphindb-theme')
-                
-                languages.setLanguageConfiguration('dolphindb', {
-                    comments: {
-                        // symbol used for single line comment. Remove this entry if your language does not support line comments
-                        lineComment: '//',
-                        
-                        // symbols used for start and end a block comment. Remove this entry if your language does not support block comments
-                        blockComment: ['/*', '*/']
-                    },
+                        },
+                    })
                     
-                    // symbols used as brackets
-                    brackets: [
-                        ['{', '}'],
-                        ['[', ']'],
-                        ['(', ')']
-                    ],
-                    
-                    // symbols that are auto closed when typing
-                    autoClosingPairs: [
-                        { open: '{', close: '}' },
-                        { open: '[', close: ']' },
-                        { open: '(', close: ')' },
-                        { open: '"', close: '"', notIn: ['string'] },
-                        { open: "'", close: "'", notIn: ['string'] },
-                        { open: '/**', close: ' */', notIn: ['string'] },
-                        { open: '/*', close: ' */', notIn: ['string'] }
-                    ],
-                    
-                    // symbols that that can be used to surround a selection
-                    surroundingPairs: [
-                        { open: '{', close: '}' },
-                        { open: '[', close: ']' },
-                        { open: '(', close: ')' },
-                        { open: '"', close: '"' },
-                        { open: "'", close: "'" },
-                        { open: '<', close: '>' },
-                    ],
-                    
-                    folding: {
-                        markers: {
-                            start: new RegExp('^\\s*//\\s*#?region\\b'),
-                            end: new RegExp('^\\s*//\\s*#?endregion\\b')
-                        }
-                    },
-                    
-                    wordPattern: new RegExp('(-?\\d*\\.\\d\\w*)|([^\\`\\~\\!\\@\\#\\%\\^\\&\\*\\(\\)\\-\\=\\+\\[\\{\\]\\}\\\\\\|\\;\\:\\\'\\"\\,\\.\\<\\>\\/\\?\\s]+)'),
-                    
-                    indentationRules: {
-                        increaseIndentPattern: new RegExp('^((?!\\/\\/).)*(\\{[^}"\'`]*|\\([^)"\'`]*|\\[[^\\]"\'`]*)$'),
-                        decreaseIndentPattern: new RegExp('^((?!.*?\\/\\*).*\\*/)?\\s*[\\}\\]].*$')
-                    }
-                })
-                
-                languages.registerCompletionItemProvider('dolphindb', {
-                    provideCompletionItems (doc, pos, ctx, canceller) {
-                        if (canceller.isCancellationRequested)
-                            return
-                        
-                        const keyword = doc.getWordAtPosition(pos).word
-                        
-                        
-                        let fns: string[]
-                        let _constants: string[]
-                        
-                        if (keyword.length === 1) {
-                            const c = keyword[0].toLowerCase()
-                            fns = funcs.filter((func, i) => 
-                                funcs_lower[i].startsWith(c)
-                            )
-                            _constants = constants.filter((constant, i) => 
-                                constants_lower[i].startsWith(c)
-                            )
-                        } else {
-                            const keyword_lower = keyword.toLowerCase()
+                    editor.defineTheme('dolphindb-theme', {
+                        base: isDark ? 'vs-dark' : 'vs',
+                        inherit: true,
+                        rules: isDark ?
+                                [
+                                    { token: 'call',  foreground: '#dcdcaa', fontStyle: 'bold' },
+                                    { token: 'operator', foreground: '#d4d4d4' },
+                                    { token: 'invalid', foreground: '#d4d4d4' },
+                                ]
+                            :
+                                [
+                                    // { token: 'keywords.dolphindb', foreground: '#ff0000' }
+                                    { token: 'comment', foreground: '#000000' },
+                                    { token: 'types', foreground: '#0f96be' },
+                                    { token: 'operator', foreground: '#ff0000' },
+                                    { token: 'invalid', foreground: '#000000' },
+                                    { token: 'keyword', foreground: '#af00db' },
+                                    { token: 'number', foreground: '#00a000' },
+                                    { token: 'call',  foreground: '#000000', fontStyle: 'bold' },
+                                ],
+                        colors: {
                             
-                            fns = funcs.filter((func, i) => {
-                                const func_lower = funcs_lower[i]
-                                let j = 0
-                                for (const c of keyword_lower) {
-                                    j = func_lower.indexOf(c, j) + 1
-                                    if (!j)  // 找不到则 j === 0
-                                        return false
-                                }
+                        }
+                    })
+                    
+                    editor.setTheme('dolphindb-theme')
+                    
+                    languages.setLanguageConfiguration('dolphindb', {
+                        comments: {
+                            // symbol used for single line comment. Remove this entry if your language does not support line comments
+                            lineComment: '//',
+                            
+                            // symbols used for start and end a block comment. Remove this entry if your language does not support block comments
+                            blockComment: ['/*', '*/']
+                        },
+                        
+                        // symbols used as brackets
+                        brackets: [
+                            ['{', '}'],
+                            ['[', ']'],
+                            ['(', ')']
+                        ],
+                        
+                        // symbols that are auto closed when typing
+                        autoClosingPairs: [
+                            { open: '{', close: '}' },
+                            { open: '[', close: ']' },
+                            { open: '(', close: ')' },
+                            { open: '"', close: '"', notIn: ['string'] },
+                            { open: "'", close: "'", notIn: ['string'] },
+                            { open: '/**', close: ' */', notIn: ['string'] },
+                            { open: '/*', close: ' */', notIn: ['string'] }
+                        ],
+                        
+                        // symbols that that can be used to surround a selection
+                        surroundingPairs: [
+                            { open: '{', close: '}' },
+                            { open: '[', close: ']' },
+                            { open: '(', close: ')' },
+                            { open: '"', close: '"' },
+                            { open: "'", close: "'" },
+                            { open: '<', close: '>' },
+                        ],
+                        
+                        folding: {
+                            markers: {
+                                start: new RegExp('^\\s*//\\s*#?region\\b'),
+                                end: new RegExp('^\\s*//\\s*#?endregion\\b')
+                            }
+                        },
+                        
+                        wordPattern: new RegExp('(-?\\d*\\.\\d\\w*)|([^\\`\\~\\!\\@\\#\\%\\^\\&\\*\\(\\)\\-\\=\\+\\[\\{\\]\\}\\\\\\|\\;\\:\\\'\\"\\,\\.\\<\\>\\/\\?\\s]+)'),
+                        
+                        indentationRules: {
+                            increaseIndentPattern: new RegExp('^((?!\\/\\/).)*(\\{[^}"\'`]*|\\([^)"\'`]*|\\[[^\\]"\'`]*)$'),
+                            decreaseIndentPattern: new RegExp('^((?!.*?\\/\\*).*\\*/)?\\s*[\\}\\]].*$')
+                        }
+                    })
+                    
+                    languages.registerCompletionItemProvider('dolphindb', {
+                        provideCompletionItems (doc, pos, ctx, canceller) {
+                            if (canceller.isCancellationRequested)
+                                return
+                            
+                            const keyword = doc.getWordAtPosition(pos).word
+                            
+                            
+                            let fns: string[]
+                            let _constants: string[]
+                            
+                            if (keyword.length === 1) {
+                                const c = keyword[0].toLowerCase()
+                                fns = funcs.filter((func, i) => 
+                                    funcs_lower[i].startsWith(c)
+                                )
+                                _constants = constants.filter((constant, i) => 
+                                    constants_lower[i].startsWith(c)
+                                )
+                            } else {
+                                const keyword_lower = keyword.toLowerCase()
                                 
-                                return true
-                            })
-                            
-                            _constants = constants.filter((constant, i) => {
-                                const constant_lower = constants_lower[i]
-                                let j = 0
-                                for (const c of keyword_lower) {
-                                    j = constant_lower.indexOf(c, j) + 1
-                                    if (!j)  // 找不到则 j === 0
-                                        return false
-                                }
+                                fns = funcs.filter((func, i) => {
+                                    const func_lower = funcs_lower[i]
+                                    let j = 0
+                                    for (const c of keyword_lower) {
+                                        j = func_lower.indexOf(c, j) + 1
+                                        if (!j)  // 找不到则 j === 0
+                                            return false
+                                    }
+                                    
+                                    return true
+                                })
                                 
-                                return true
-                            })
-                        }
-                        
-                        return {
-                            suggestions: [
-                                ...keywords.filter(kw => 
-                                    kw.startsWith(keyword)
-                                ).map(kw => ({
-                                    label: kw,
-                                    insertText: kw,
-                                    kind: CompletionItemKind.Keyword,
-                                }) as monaco.languages.CompletionItem),
-                                ... _constants.map(constant => ({
-                                    label: constant,
-                                    insertText: constant,
-                                    kind: CompletionItemKind.Constant
-                                }) as monaco.languages.CompletionItem),
-                                ...fns.map(fn => ({
-                                    label: fn,
-                                    insertText: fn,
-                                    kind: CompletionItemKind.Function,
-                                }) as monaco.languages.CompletionItem),
-                            ]
-                        }
-                    },
-                    
-                    resolveCompletionItem (item, canceller) {
-                        if (canceller.isCancellationRequested)
-                            return
-                        
-                        item.documentation = get_func_md(item.label as string)
-                        
-                        return item
-                    }
-                })
-                
-                languages.registerHoverProvider('dolphindb', {
-                    provideHover (doc, pos, canceller) {
-                        if (canceller.isCancellationRequested)
-                            return
-                        
-                        const word = doc.getWordAtPosition(pos)
-                        
-                        if (!word)
-                            return
-                        
-                        const md = get_func_md(word.word)
-                        
-                        if (!md)
-                            return
-                        
-                        return {
-                            contents: [md]
-                        }
-                    }
-                })
-                
-                languages.registerSignatureHelpProvider('dolphindb', {
-                    signatureHelpTriggerCharacters: ['(', ','],
-                    
-                    provideSignatureHelp (doc, pos, canceller, ctx) {
-                        if (canceller.isCancellationRequested)
-                            return
-                        
-                        const { func_name, param_search_pos } = find_func_start(doc, pos)
-                        if (param_search_pos === -1) 
-                            return
-                        
-                        const index = find_active_param_index(doc, pos, param_search_pos)
-                        if (index === -1) 
-                            return
-                        
-                        const signature_and_params = get_signature_and_params(func_name)
-                        if (!signature_and_params)
-                            return
-                        
-                        const { signature, params } = signature_and_params
-                        
-                        return {
-                            dispose () { },
+                                _constants = constants.filter((constant, i) => {
+                                    const constant_lower = constants_lower[i]
+                                    let j = 0
+                                    for (const c of keyword_lower) {
+                                        j = constant_lower.indexOf(c, j) + 1
+                                        if (!j)  // 找不到则 j === 0
+                                            return false
+                                    }
+                                    
+                                    return true
+                                })
+                            }
                             
-                            value: {
-                                activeParameter: index > params.length - 1 ? params.length - 1 : index,
-                                signatures: [{
-                                    label: signature,
-                                    documentation: get_func_md(func_name),
-                                    parameters: params.map(param => ({
-                                        label: param
-                                    }))
-                                }],
-                                activeSignature: 0,
+                            return {
+                                suggestions: [
+                                    ...keywords.filter(kw => 
+                                        kw.startsWith(keyword)
+                                    ).map(kw => ({
+                                        label: kw,
+                                        insertText: kw,
+                                        kind: CompletionItemKind.Keyword,
+                                    }) as monaco.languages.CompletionItem),
+                                    ... _constants.map(constant => ({
+                                        label: constant,
+                                        insertText: constant,
+                                        kind: CompletionItemKind.Constant
+                                    }) as monaco.languages.CompletionItem),
+                                    ...fns.map(fn => ({
+                                        label: fn,
+                                        insertText: fn,
+                                        kind: CompletionItemKind.Function,
+                                    }) as monaco.languages.CompletionItem),
+                                ]
+                            }
+                        },
+                        
+                        resolveCompletionItem (item, canceller) {
+                            if (canceller.isCancellationRequested)
+                                return
+                            
+                            item.documentation = get_func_md(item.label as string)
+                            
+                            return item
+                        }
+                    })
+                    
+                    languages.registerHoverProvider('dolphindb', {
+                        provideHover (doc, pos, canceller) {
+                            if (canceller.isCancellationRequested)
+                                return
+                            
+                            const word = doc.getWordAtPosition(pos)
+                            
+                            if (!word)
+                                return
+                            
+                            const md = get_func_md(word.word)
+                            
+                            if (!md)
+                                return
+                            
+                            return {
+                                contents: [md]
                             }
                         }
-                    }
-                })
-                
-                ;(monaco as any).inited = true
-            }}
-            
-            // onSave={(value) => {
-            //     console.log('onSave', value)
-            // }}
-            
-            onEditorDidMount={(editor, monaco) => {
-                editor.setValue(code || '')
-                
-                editor.getModel().onDidChangeContent((event) => {
-                    onChange({
-                        refId,
-                        code: editor.getValue().replaceAll('\r\n', '\n')
                     })
-                })
+                    
+                    languages.registerSignatureHelpProvider('dolphindb', {
+                        signatureHelpTriggerCharacters: ['(', ','],
+                        
+                        provideSignatureHelp (doc, pos, canceller, ctx) {
+                            if (canceller.isCancellationRequested)
+                                return
+                            
+                            const { func_name, param_search_pos } = find_func_start(doc, pos)
+                            if (param_search_pos === -1) 
+                                return
+                            
+                            const index = find_active_param_index(doc, pos, param_search_pos)
+                            if (index === -1) 
+                                return
+                            
+                            const signature_and_params = get_signature_and_params(func_name)
+                            if (!signature_and_params)
+                                return
+                            
+                            const { signature, params } = signature_and_params
+                            
+                            return {
+                                dispose () { },
+                                
+                                value: {
+                                    activeParameter: index > params.length - 1 ? params.length - 1 : index,
+                                    signatures: [{
+                                        label: signature,
+                                        documentation: get_func_md(func_name),
+                                        parameters: params.map(param => ({
+                                            label: param
+                                        }))
+                                    }],
+                                    activeSignature: 0,
+                                }
+                            }
+                        }
+                    })
+                    
+                    ;(monaco as any).inited = true
+                }}
                 
-                monaco.editor.setTheme('dolphindb-theme')
+                { ... onRunQuery ? {
+                    onSave (code) {
+                        onRunQuery()
+                    }
+                } : { } }
                 
-                let { widget } = editor.getContribution('editor.contrib.suggestController') as any
-                
-                if (widget) {
-                    const { value: suggest_widget } = widget
-                    suggest_widget._setDetailsVisible(true)
-                    // suggest_widget._persistedSize.store({
-                    //     width: 200,
-                    //     height: 256
-                    // })
-                }
-            }}
-        />
+                onEditorDidMount={(editor, monaco) => {
+                    editor.setValue(code || '')
+                    
+                    editor.getModel().onDidChangeContent((event) => {
+                        onChange({
+                            refId,
+                            code: editor.getValue().replaceAll('\r\n', '\n')
+                        })
+                    })
+                    
+                    monaco.editor.setTheme('dolphindb-theme')
+                    
+                    let { widget } = editor.getContribution('editor.contrib.suggestController') as any
+                    
+                    if (widget) {
+                        const { value: suggest_widget } = widget
+                        suggest_widget._setDetailsVisible(true)
+                        // suggest_widget._persistedSize.store({
+                        //     width: 200,
+                        //     height: 256
+                        // })
+                    }
+                }}
+            />
+        </Resizable>
     </div>
 }
 

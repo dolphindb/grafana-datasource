@@ -7,6 +7,7 @@ import { fpd_out, copy_files, webpack } from './webpack.js'
 
 await fdelete(fpd_out)
 
-await copy_files()
-
-await webpack.build()
+await Promise.all([
+    copy_files(),
+    webpack.build()
+])

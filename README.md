@@ -1,35 +1,102 @@
-# DolphinDB DataSource
-## 安装方法
-### 1. 安装插件
-解压 `dolphindb-datasource.2022.xx.xx.xx.zip`, 将其中的 dolphindb-datasource 文件夹解压到这个路径 `<grafana 安装目录>/data/plugins/dolphindb-datasource`
+# DolphinDB Grafana DataSource Plugin
 
-如果不存在 plugins 这一层目录，可以手动创建该文件夹
+<p align='center'>
+    <img src='./ddb.svg' alt='DolphinDB Grafana DataSource' width='256'>
+</p>
 
-### 2. 修改 grafana 配置文件，使其允许加载未签名的 dolphindb-datasource 插件
-阅读以下文档，创建 `custom.ini`
+<p align='center'>
+    <a href='https://github.com/dolphindb/api-javascript' target='_blank'>
+        <img alt='vscode extension installs' src='https://img.shields.io/npm/v/dolphindb?color=brightgreen&label=api-javascript&style=flat-square' />
+    </a>
+</p>
+
+## English | [中文](./README.zh.md)
+
+Grafana is an open source data visualization web application that is good at dynamically displaying time series data and supports multiple data sources. Users can display data graphs in the browser through Grafana by configuring the connected data source and writing query scripts
+
+DolphinDB has developed a Grafana data source plugin (dolphindb-datasource), which enables users to write query scripts on the Grafana panel (dashboard), interact with DolphinDB (based on WebSocket), and visualize DolphinDB time series data
+
+<img src='./demo.png' width='1200'>
+
+## Installation
+### 1. Install Grafana
+Go to Grafana official website: https://grafana.com/oss/grafana/ , install the latest open source version (OSS, Open-Source Software)
+
+### 2. Install the dolphindb-datasource plugin
+In Releases (https://github.com/dolphindb/grafana-datasource/releases) download the latest version of the plugin zip, such as `dolphindb-datasource.2022.xx.xx.xx.zip`
+
+Unzip the dolphindb-datasource folder in the compressed package to the following path:
+- Windows: `<grafana installation directory>/data/plugins/dolphindb-datasource`
+- Linux: `/var/lib/grafana/plugins/`
+
+If the plugins level directory does not exist, you can manually create this folder
+
+### 3. Modify the grafana configuration file to allow loading the unsigned dolphindb-datasource plugin
+Read the following documents to open and edit configuration files
 https://grafana.com/docs/grafana/latest/administration/configuration/#configuration-file-location
 
-打开 `custom.ini` 文件，在 `[plugins]` 部分下面修改以下的配置
+Uncomment `allow_loading_unsigned_plugins` in `[plugins]` section and change to `dolphindb-datasource`
+````ini
 allow_loading_unsigned_plugins = dolphindb-datasource
+````
 
-### 3. 重启 Grafana 进程或服务
-参考下面的文档
+Note: Grafana needs to be restarted every time a configuration item is modified
+
+### 4. Restart the Grafana process or service
 https://grafana.com/docs/grafana/latest/installation/restart-grafana/
 
 
-### 4. 验证已加载插件
-在 grafana 启动日志中可以看到类似以下的日志  
-`WARN [05-19|12:05:48] Permitting unsigned plugin. This is not recommended logger=plugin.signature.validator pluginID=dolphindb-datasource pluginDir=<grafana 安装目录>/data/plugins/dolphindb-datasource`
+### 5. Verify that the plugin is loaded
+You can see a log similar to the following in the grafana startup log
+````log
+WARN [05-19|12:05:48] Permitting unsigned plugin. This is not recommended logger=plugin.signature.validator pluginID=dolphindb-datasource pluginDir=<grafana installation directory>/data/plugins/dolphindb-datasource
+````
 
-或者直接访问下面的链接，能够看到页面中 DolphinDB 插件是 Installed 状态
+The log file path might be:
+- Windows: `<grafana installation directory>/data/log/grafana.log`
+- Linux: `/var/log/grafana/grafana.log`
+
+Or visit the link below, you can see that the DolphinDB plugin on the page is in the Installed state
 http://localhost:3000/admin/plugins?filterBy=all&filterByType=all&q=dolphindb
 
-## 使用方法
-### 新建 DolphinDB 数据源
-访问 http://localhost:3000/datasources 添加数据源，过滤搜索 dolphindb, 配置数据源后点 `Save & Test` 保存数据源
 
-### 新建 Panel
-在 Panel 的 Data source 属性中选择上一步添加的数据源，然后编写代码，代码的最后一条语句需要返回 table，编写完成后点击页面中的刷新按钮 (Refresh dashboard) 可以将代码发到 DolphinDB 数据库运行并展示出图表
 
-## 开发
-flink('d:/1/ddb/gfn/out/', 'e:/sdk/grafana/data/plugins/dolphindb-datasource/')
+## Instructions
+### 1. Open and log in to Grafana
+Open http://localhost:3000
+The initial login name and password are both admin
+
+### 2. Create a new DolphinDB data source
+Open http://localhost:3000/datasources or click `Configuration > Data sources` in the left navigation to add a data source, filter and search for dolphindb, configure the data source and click `Save & Test` to save the data source
+
+### 3. Create a new Panel, write query scripts, and visualize DolphinDB time series data
+Open or create a new Dashboard, edit or create a new Panel, select the data source added in the previous step in the Data source property of the Panel
+Write a query script, the last statement of the code needs to return a table
+After writing, press `ctrl + s` to save, or click the refresh button on the page (Refresh dashboard), you can send the Query to the DolphinDB database to run and display the chart  
+The height of the code editing box can be adjusted by dragging the bottom
+
+The dolphindb-datasource plugin supports the `$__timeFilter` variable, which is the time axis range above the panel
+For example, the current time axis interval is `2022-02-15 00:00:00 - 2022.02.17 00:00:00` , then `$__timeFilter` in the code will be replaced with `pair(2022.02.15 00:00 :00.000, 2022.02.17 00:00:00.000)`
+
+To view the message output by `print('xxx')` in the code, or the code after variable substitution, you can press `F12` or `Ctrl + Shift + I` or `Right click > Inspect` to open the developer debugging tool of the browser (devtools), switch to the Console panel to view
+
+### 4. Learn how to use Grafana by referring to the documentation
+https://grafana.com/docs/grafana/latest/
+
+
+
+## Development method
+
+```shell
+git clone https://github.com/dolphindb/grafana-datasource.git
+
+cd grafana-datasource
+
+npm i --force
+
+npm run dev
+
+flink('d:/grafana-datasource/out/', 'e:/sdk/grafana/data/plugins/dolphindb-datasource/')
+
+# restart grafana
+````
