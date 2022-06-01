@@ -1,4 +1,4 @@
-# DolphinDB Grafana DataSource
+# DolphinDB Grafana DataSource Plugin
 
 <p align='center'>
     <img src='./ddb.svg' alt='DolphinDB Grafana DataSource' width='256'>
@@ -77,6 +77,8 @@ http://localhost:3000/admin/plugins?filterBy=all&filterByType=all&q=dolphindb
 
 dolphindb-datasource 插件支持 `$__timeFilter` 变量，值为面板上方的时间轴区间  
 比如当前的时间轴区间是 `2022-02-15 00:00:00 - 2022.02.17 00:00:00` ，那么代码中的 `$__timeFilter` 会被替换为 `pair(2022.02.15 00:00:00.000, 2022.02.17 00:00:00.000)`
+
+要查看代码中 `print('xxx')` 输出的消息，或者变量替换后的代码，可以按 `F12` 或 `Ctrl + Shift + I` 或 `右键 > 检查` 打开浏览器的开发者调试工具 (devtools), 切换到控制台 (Console) 面板中查看
 
 ### 4. 参考文档学习 Grafana 使用
 https://grafana.com/docs/grafana/latest/

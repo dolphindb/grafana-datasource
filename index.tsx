@@ -2,6 +2,8 @@ import './index.sass'
 
 import { default as React, useRef } from 'react'
 
+import { Resizable } from 're-resizable'
+
 import { getTemplateSrv } from '@grafana/runtime'
 import {
     DataSourcePlugin,
@@ -45,6 +47,7 @@ import {
     timestamp2ms,
     nanotime2ns,
     nanotimestamp2ns,
+    nulls,
     type DdbVectorValue,
     type DdbValue,
     type DdbSymbolExtendedValue,
@@ -109,7 +112,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
     constructor (settings: DataSourceInstanceSettings<DataSourceConfig>) {
         super(settings)
         
-        console.log('new DolphinDB.DataSource', settings)
+        console.log('new DolphinDB.DataSource:', settings)
         
         this.settings = settings
         
@@ -143,7 +146,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
     
     
     override async query (request: DataQueryRequest<DdbDataQuery>): Promise<DataQueryResponse> {
-        console.log('query.request', request)
+        console.log('query.request:', request)
         
         const {
             range: {
@@ -163,26 +166,29 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                     
                     code ||= ''
                     
-                    console.log(`${refId}.query`, query)
+                    console.log(`${refId}.query:`, query)
                     
                     if (hide || !code.trim())
                         return new MutableDataFrame({ refId, fields: [ ] })
                     
-                    const table = await this.ddb.eval<DdbObj<DdbObj<DdbVectorValue>[]>>(
-                        getTemplateSrv()
-                            .replace(
-                                code.replaceAll(
-                                    /\$(__)?timeFilter\b/g,
-                                    'pair(' +
-                                        from.format('YYYY.MM.DD HH:mm:ss.SSS') + 
-                                        ', ' +
-                                        to.format('YYYY.MM.DD HH:mm:ss.SSS') +
-                                    ')'
-                                ),
-                                { },
-                                var_formatter
-                            )
-                    )
+                    const code_ = getTemplateSrv()
+                        .replace(
+                            code.replaceAll(
+                                /\$(__)?timeFilter\b/g,
+                                'pair(' +
+                                    from.format('YYYY.MM.DD HH:mm:ss.SSS') + 
+                                    ', ' +
+                                    to.format('YYYY.MM.DD HH:mm:ss.SSS') +
+                                ')'
+                            ),
+                            { },
+                            var_formatter
+                        )
+                    
+                    console.log(`${refId}.code:`)
+                    console.log(code_)
+                    
+                    const table = await this.ddb.eval<DdbObj<DdbObj<DdbVectorValue>[]>>(code_)
                     
                     if (table.form !== DdbForm.table)
                         throw new Error(t('Query 代码的最后一条语句需要返回 table，实际返回的是: {{value}}', { value: table.toString() }))

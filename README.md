@@ -1,4 +1,4 @@
-# DolphinDB Grafana DataSource
+# DolphinDB Grafana DataSource Plugin
 
 <p align='center'>
     <img src='./ddb.svg' alt='DolphinDB Grafana DataSource' width='256'>
@@ -77,6 +77,8 @@ The height of the code editing box can be adjusted by dragging the bottom
 
 The dolphindb-datasource plugin supports the `$__timeFilter` variable, which is the time axis range above the panel
 For example, the current time axis interval is `2022-02-15 00:00:00 - 2022.02.17 00:00:00` , then `$__timeFilter` in the code will be replaced with `pair(2022.02.15 00:00 :00.000, 2022.02.17 00:00:00.000)`
+
+To view the message output by `print('xxx')` in the code, or the code after variable substitution, you can press `F12` or `Ctrl + Shift + I` or `Right click > Inspect` to open the developer debugging tool of the browser (devtools), switch to the Console panel to view
 
 ### 4. Learn how to use Grafana by referring to the documentation
 https://grafana.com/docs/grafana/latest/
