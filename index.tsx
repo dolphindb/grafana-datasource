@@ -205,7 +205,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                                     return {
                                         name,
                                         type: FieldType.boolean,
-                                        values: [...value as Uint8Array]
+                                        values: [...value as Uint8Array].map(x => x === nulls.int8 ? null : x)
                                     }
                                 
                                 
