@@ -20,8 +20,49 @@
                 color: #444444
     
 .variable-query-editor
-    .query-actions
-        margin-top: 4px
+    .query-bottom
+        margin-top: 16px
+        margin-bottom: 16px
+        
         display: flex
-        justify-content: right
+        
+        align-items: center
+        
+        .note
+            flex: 1
+            
+            font-size: 13px
+            
+            color: #24292e
+            
+        
+        .status
+            justify-content: right
+            
+            display: flex
+            
+            align-items: center
+            
+            margin-right: 16px
+            
+            transition: opacity 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)
+            
+            opacity: 0
+            
+            user-select: none
+            
+            &.visible
+                opacity: 1
+            
+            .icon
+                margin-right: 4px
+                margin-top: 1px
+                
+            
+        .button
+            justify-content: right
+            
+.theme-dark .variable-query-editor .query-bottom
+    .note, .status
+        color: #ccccdc
     

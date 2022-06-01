@@ -43,5 +43,11 @@
     },
     "Query 代码的最后一条语句需要返回 table，实际返回的是: {{value}}": {
         "en": "The last statement of the Query code needs to return a table, the actual return is: {{value}}"
+    },
+    "修改 Query 后请在编辑框内按 Ctrl + S 或点击右侧按钮暂存查询并更新预览": {
+        "en": "Press Ctrl + S in the edit box or click the button to stage the query and update the preview"
+    },
+    "已暂存查询并更新预览": {
+        "en": "Query staged and preview updated"
     }
 }

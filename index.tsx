@@ -1,8 +1,10 @@
 import './index.sass'
 
-import { default as React, useRef } from 'react'
+import { default as React, useRef, useState } from 'react'
 
 import { Resizable } from 're-resizable'
+
+import { delay } from 'xshell/utils.browser.js'
 
 import { getTemplateSrv } from '@grafana/runtime'
 import {
@@ -26,6 +28,7 @@ import {
     Input,
     InlineSwitch,
     Button,
+    Icon,
     useTheme2
 } from '@grafana/ui'
 
@@ -1044,6 +1047,15 @@ function VariableQueryEditor ({
     onChange (query: string, definition: string): void
 }) {
     const rquery = useRef(query)
+    const rtrigger = useRef(() => { })
+    
+    function save () {
+        const { current: query } = rquery
+        console.log('save query:')
+        console.log(query)
+        onChange(query, query)
+        rtrigger.current()
+    }
     
     return <div className='variable-query-editor'>
         <InlineField grow label='Query' labelWidth={20} tooltip={t('通过执行脚本生成变量选项，脚本的最后一条语句应返回标量、向量、或者只含一个向量的表格')}>
@@ -1055,21 +1067,43 @@ function VariableQueryEditor ({
                     onChange={({ code }) => {
                         rquery.current = code
                     }}
+                    onRunQuery={save}
                 />
-                <div className='query-actions'>
-                    <Button
-                        className='save-button'
-                        icon='save'
-                        onClick={ e => {
-                            e.preventDefault()
-                            const { current: query } = rquery
-                            console.log('save query', query)
-                            onChange(query, query)
-                        }
-                    }>{t('暂存查询并更新预览')}</Button>
-                </div>
+                <VariableQueryEditorBottom save={save} rtrigger={rtrigger} />
             </>
         </InlineField>
+    </div>
+}
+
+function VariableQueryEditorBottom ({
+    save,
+    rtrigger
+}: {
+    save? (): void
+    rtrigger: React.MutableRefObject<() => void>
+}) {
+    const [visible, set_visible] = useState(false)
+    
+    rtrigger.current = async function trigger () {
+        set_visible(true)
+        await delay(500)
+        set_visible(false)
+    }
+    
+    return <div className='query-bottom'>
+        <div className='note'>{t('修改 Query 后请在编辑框内按 Ctrl + S 或点击右侧按钮暂存查询并更新预览')}</div>
+        <div className={`status ${visible ? 'visible' : ''}`}>
+            <Icon className='icon' name='check-circle' />
+            {t('已暂存查询并更新预览')}
+        </div>
+        <Button
+            className='button'
+            icon='save'
+            onClick={e => {
+                e.preventDefault()
+                save()
+            }
+        }>{t('暂存查询并更新预览')}</Button>
     </div>
 }
 
