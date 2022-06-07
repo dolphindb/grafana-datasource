@@ -16,7 +16,7 @@ import sass from 'sass'
 import type { Options as SassOptions } from 'sass-loader'
 
 
-import { fcopy, fexists } from 'xshell'
+import { fcopy, fexists, fread, fwrite } from 'xshell'
 
 
 export const fpd_root = `${path.dirname(fileURLToPath(import.meta.url))}/`
@@ -28,12 +28,20 @@ export async function copy_files () {
     await Promise.all([
         ... ([
             'plugin.json',
-            'README.md',
-            'README.zh.md',
             'logo.svg',
+            'demo.png',
+            'ddb.svg',
+            'README.zh.md'
         ] as const).map(async fname => 
             fcopy(fpd_root + fname, fpd_out + fname))
         ,
+        fwrite(
+            `${fpd_out}README.md`,
+            (await fread(`${fpd_root}README.md`))
+                .replaceAll('./README.zh.md', 'https://github.com/dolphindb/grafana-datasource/blob/master/README.zh.md')
+                .replaceAll('./demo.png', '/public/plugins/dolphindb-datasource/demo.png')
+                .replaceAll('./ddb.svg', '/public/plugins/dolphindb-datasource/ddb.svg')
+        ),
         ... (['myfont.woff2', 'myfontb.woff2'] as const).map(async fname => {
             const fp_out = fpd_out + fname
             
@@ -76,19 +84,13 @@ const config: Webpack.Configuration = {
         filename: '[name]',
         
         // grafana 插件会被 SystemJS 加载，最后需要编译生成 define(['依赖'], function (dep) {  }) 这样的格式
-        libraryTarget: 'amd',
+        library: {
+            type: 'amd'
+        },
         
         publicPath: '/',
         pathinfo: true,
         globalObject: 'globalThis',
-        
-        // 在 bundle 中导出 entry 文件的 export
-        // library: {
-        //     type: 'commonjs2',
-        // }
-        
-        // HookWebpackError: HMR is not implemented for module chunk format yet
-        // module: true,
     },
     
     target: ['web', 'es2022'],
@@ -256,14 +258,8 @@ const config: Webpack.Configuration = {
         
         children: true,
         
-        assets: false,
-        assetsSpace: 100,
-        
         cachedAssets: false,
         cachedModules: false,
-        
-        modules: false,
-        // modulesSpace: 30
     },
 }
 
@@ -313,7 +309,9 @@ export let webpack = {
             }, (error, stats) => {
                 if (error)
                     console.log(error)
-                console.log(stats.toString(config.stats))
+                console.log(
+                    stats.toString(config.stats)
+                )
                 if (!first)
                     return
                 first = false
@@ -345,12 +343,16 @@ export let webpack = {
         await new Promise<void>((resolve, reject) => {
             this.compiler.run((error, stats) => {
                 if (error || stats.hasErrors()) {
-                    console.log(stats.toString(config.stats))
+                    console.log(
+                        stats.toString(config.stats)
+                    )
                     reject(error || stats)
                     return
                 }
                 
-                console.log(stats.toString(config.stats))
+                console.log(
+                    stats.toString(config.stats)
+                )
                 resolve()
             })
         })

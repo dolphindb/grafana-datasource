@@ -75,10 +75,15 @@ http://localhost:3000/admin/plugins?filterBy=all&filterByType=all&q=dolphindb
 编写完成后按 `ctrl + s` 保存，或者点击页面中的刷新按钮 (Refresh dashboard)，可以将 Query 发到 DolphinDB 数据库运行并展示出图表  
 代码编辑框的高度可以拖动底部调整
 
-dolphindb-datasource 插件支持 `$__timeFilter` 变量，值为面板上方的时间轴区间  
-比如当前的时间轴区间是 `2022-02-15 00:00:00 - 2022.02.17 00:00:00` ，那么代码中的 `$__timeFilter` 会被替换为 `pair(2022.02.15 00:00:00.000, 2022.02.17 00:00:00.000)`
+dolphindb-datasource 插件支持变量，比如:
+- `$__timeFilter` 变量: 值为面板上方的时间轴区间，比如当前的时间轴区间是 `2022-02-15 00:00:00 - 2022.02.17 00:00:00` ，那么代码中的 `$__timeFilter` 会被替换为 `pair(2022.02.15 00:00:00.000, 2022.02.17 00:00:00.000)`
+- `$__interval` 和 `$__interval_ms` 变量: 值为 grafana 根据时间轴区间长度和屏幕像素点自动计算的时间分组间隔。`$__interval` 会被替换为 DolphinDB 中对应的 duration 类型; `$__interval_ms` 会被替换为毫秒数 (整型)
+- query 变量: 通过 SQL 查询生成动态值或选项列表
 
-要查看代码中 `print('xxx')` 输出的消息，或者变量替换后的代码，可以按 `F12` 或 `Ctrl + Shift + I` 或 `右键 > 检查` 打开浏览器的开发者调试工具 (devtools), 切换到控制台 (Console) 面板中查看
+更多变量请查看 https://grafana.com/docs/grafana/latest/variables/
+
+
+要查看代码中 `print('xxx')` 输出的消息，或者变量替换 (插值) 后的代码，可以按 `F12` 或 `Ctrl + Shift + I` 或 `右键 > 检查` 打开浏览器的开发者调试工具 (devtools), 切换到控制台 (Console) 面板中查看
 
 ### 4. 参考文档学习 Grafana 使用
 https://grafana.com/docs/grafana/latest/

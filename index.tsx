@@ -156,6 +156,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                 from,
                 to,
             },
+            scopedVars,
             targets: queries,
         } = request
         
@@ -174,17 +175,25 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                     if (hide || !code.trim())
                         return new MutableDataFrame({ refId, fields: [ ] })
                     
-                    const code_ = getTemplateSrv()
+                    const tplsrv = getTemplateSrv()
+                    
+                    const code_ = tplsrv
                         .replace(
-                            code.replaceAll(
-                                /\$(__)?timeFilter\b/g,
-                                'pair(' +
-                                    from.format('YYYY.MM.DD HH:mm:ss.SSS') + 
-                                    ', ' +
-                                    to.format('YYYY.MM.DD HH:mm:ss.SSS') +
-                                ')'
-                            ),
-                            { },
+                            code
+                                .replaceAll(
+                                    /\$(__)?timeFilter\b/g,
+                                    () =>
+                                        'pair(' +
+                                            from.format('YYYY.MM.DD HH:mm:ss.SSS') + 
+                                            ', ' +
+                                            to.format('YYYY.MM.DD HH:mm:ss.SSS') +
+                                        ')'
+                                ).replaceAll(
+                                    /\$__interval\b/g,
+                                    () =>
+                                        tplsrv.replace('$__interval', scopedVars).replace(/h$/, 'H')
+                                ),
+                            scopedVars,
                             var_formatter
                         )
                     
