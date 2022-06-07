@@ -75,10 +75,15 @@ Write a query script, the last statement of the code needs to return a table
 After writing, press `ctrl + s` to save, or click the refresh button on the page (Refresh dashboard), you can send the Query to the DolphinDB database to run and display the chart  
 The height of the code editing box can be adjusted by dragging the bottom
 
-The dolphindb-datasource plugin supports the `$__timeFilter` variable, which is the time axis range above the panel
-For example, the current time axis interval is `2022-02-15 00:00:00 - 2022.02.17 00:00:00` , then `$__timeFilter` in the code will be replaced with `pair(2022.02.15 00:00 :00.000, 2022.02.17 00:00:00.000)`
+The dolphindb-datasource plugin supports variables, such as:
+- `$__timeFilter` variable: the value is the time axis interval above the panel. For example, the current time axis interval is `2022-02-15 00:00:00 - 2022.02.17 00:00:00` , then the ` $__timeFilter` will be replaced with `pair(2022.02.15 00:00:00.000, 2022.02.17 00:00:00.000)`
+- `$__interval` and `$__interval_ms` variables: the value is the time grouping interval automatically calculated by grafana based on the length of the time axis interval and the screen pixels. `$__interval` will be replaced with the corresponding duration type in DolphinDB; `$__interval_ms` will be replaced with the number of milliseconds (integer)
+- query variable: Generate dynamic value or list of options via SQL query
 
-To view the message output by `print('xxx')` in the code, or the code after variable substitution, you can press `F12` or `Ctrl + Shift + I` or `Right click > Inspect` to open the developer debugging tool of the browser (devtools), switch to the Console panel to view
+For more variables see https://grafana.com/docs/grafana/latest/variables/
+
+
+To view the message output by `print('xxx')` in the code, or the code after variable substitution (interpolation), you can press `F12` or `Ctrl + Shift + I` or `Right click > Inspect` to open the browser development Or debug tools (devtools), switch to the console (Console) panel to view
 
 ### 4. Learn how to use Grafana by referring to the documentation
 https://grafana.com/docs/grafana/latest/
