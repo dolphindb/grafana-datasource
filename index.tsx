@@ -150,15 +150,19 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
     
     override async query (request: DataQueryRequest<DdbDataQuery>): Promise<DataQueryResponse> {
         console.log('query.request:', request)
+        console.log('settings:', this.settings)
+        
         
         const {
             range: {
                 from,
                 to,
             },
+            scopedVars,
             targets: queries,
         } = request
         
+        // console.log('__interval',__interval_vallue)
         
         return {
             data: await Promise.all(
@@ -184,7 +188,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                                     to.format('YYYY.MM.DD HH:mm:ss.SSS') +
                                 ')'
                             ),
-                            { },
+                            scopedVars,
                             var_formatter
                         )
                     
