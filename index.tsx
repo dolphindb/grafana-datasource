@@ -4,6 +4,7 @@ import { default as React, useRef, useState } from 'react'
 
 import { delay } from 'xshell/utils.browser.js'
 
+import { getDataSourceSrv } from '@grafana/runtime'
 import {
     DataSourcePlugin,
     DataSourceApi,
@@ -141,6 +142,9 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
         } = request
         
         
+        const tplsrv = (getDataSourceSrv() as any).templateSrv
+        
+        
         return {
             data: await Promise.all(
                 queries.map(async query => {
@@ -155,23 +159,30 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                     if (hide || !code.trim())
                         return new MutableDataFrame({ refId, fields: [ ] })
                     
-                    const code_ = 
-                        code
-                            .replaceAll(
-                                /\$(__)?timeFilter\b/g,
-                                () =>
-                                    'pair(' +
-                                        from.format('YYYY.MM.DD HH:mm:ss.SSS') + 
-                                        ', ' +
-                                        to.format('YYYY.MM.DD HH:mm:ss.SSS') +
-                                    ')'
-                            )
+                    const code_ = tplsrv
+                        .replace(
+                            code
+                                .replaceAll(
+                                    /\$(__)?timeFilter\b/g,
+                                    () =>
+                                        'pair(' +
+                                            from.format('YYYY.MM.DD HH:mm:ss.SSS') + 
+                                            ', ' +
+                                            to.format('YYYY.MM.DD HH:mm:ss.SSS') +
+                                        ')'
+                                ).replaceAll(
+                                    /\$__interval\b/g,
+                                    () =>
+                                        tplsrv.replace('$__interval', scopedVars).replace(/h$/, 'H')
+                                ),
+                            scopedVars,
+                            var_formatter
+                        )
                         
                     
                     console.log(`${refId}.code:`)
                     console.log(code_)
                     
-                    console.log(this.templateSrv)
                     
                     const table = await this.ddb.eval<DdbObj<DdbObj<DdbVectorValue>[]>>(code_)
                     
@@ -353,7 +364,10 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
     override async metricFindQuery (query: string, options: any): Promise<MetricFindValue[]> {
         console.log('metricFindQuery:', { query, options })
         
-        const result = await this.ddb.eval(query)
+        const result = await this.ddb.eval(
+            (getDataSourceSrv() as any).templateSrv
+                .replace(query, { }, var_formatter)
+        )
         
         // 标量直接返回含有该标量的数组
         // 向量返回对应数组
