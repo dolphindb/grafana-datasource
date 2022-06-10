@@ -51,10 +51,7 @@ import {
 } from 'dolphindb/browser.js'
 
 
-import { t, language } from './i18n/index.js'
-
-
-// const docs = language === 'zh' ? docs_zh : docs_en
+import { t } from './i18n/index.js'
 
 
 console.log(t('DolphinDB Grafana 插件已加载'))
@@ -189,172 +186,210 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                     if (table.form !== DdbForm.table)
                         throw new Error(t('Query 代码的最后一条语句需要返回 table，实际返回的是: {{value}}', { value: table.toString() }))
                     
-                    return new MutableDataFrame({
+                    // return [
+                    //     {
+                    //         target: 'upper_75',
+                    //         datapoints: [
+                    //             [622, 1450754160000],
+                    //             [365, 1450754220000]
+                    //         ]
+                    //     },
+                    //     {
+                    //         target: 'upper_90',
+                    //         datapoints: [
+                    //             [861, 1450754160000],
+                    //             [767, 1450754220000]
+                    //         ]
+                    //     }
+                    // ]
+                    
+                    const fields = table.value.map(col => {
+                        const { type, value, rows, name } = col
+                        
+                        switch (type) {
+                            // --- boolean
+                            case DdbType.bool:
+                                return {
+                                    name,
+                                    type: FieldType.boolean,
+                                    values: [...value as Uint8Array].map(x => x === nulls.int8 ? null : x)
+                                }
+                            
+                            
+                            // --- string
+                            case DdbType.string:
+                            case DdbType.symbol:
+                                return {
+                                    name,
+                                    type: FieldType.string,
+                                    values: value
+                                }
+                            
+                            case DdbType.symbol_extended:
+                            case DdbType.char:
+                            case DdbType.uuid:
+                            case DdbType.int128:
+                            case DdbType.ipaddr:
+                            case DdbType.blob:
+                            case DdbType.complex:
+                            case DdbType.point:
+                                return {
+                                    name,
+                                    type: FieldType.string,
+                                    values: (() => {
+                                        let values = new Array(rows)
+                                        
+                                        for (let i = 0; i < rows; i++)
+                                            values[i] = this.formati(col, i)
+                                        
+                                        return values
+                                    })()
+                                }
+                            
+                            
+                            // --- time
+                            case DdbType.date:
+                                return {
+                                    name,
+                                    type: FieldType.time,
+                                    values: [...value as Int32Array].map(x => date2ms(x))
+                                }
+                            
+                            case DdbType.month:
+                                return {
+                                    name,
+                                    type: FieldType.time,
+                                    values: [...value as Int32Array].map(x => month2ms(x))
+                                }
+                            
+                            case DdbType.time:
+                                return {
+                                    name,
+                                    type: FieldType.time,
+                                    values: [...value as Int32Array].map(x => time2ms(x))
+                                }
+                            
+                            case DdbType.minute:
+                                return {
+                                    name,
+                                    type: FieldType.time,
+                                    values: [...value as Int32Array].map(x => minute2ms(x))
+                                }
+                            
+                            case DdbType.second:
+                                return {
+                                    name,
+                                    type: FieldType.time,
+                                    values: [...value as Int32Array].map(x => second2ms(x))
+                                }
+                            
+                            case DdbType.datetime:
+                                return {
+                                    name,
+                                    type: FieldType.time,
+                                    values: [...value as Int32Array].map(x => datetime2ms(x))
+                                }
+                            
+                            case DdbType.timestamp:
+                                return {
+                                    name,
+                                    type: FieldType.time,
+                                    values: [...value as BigInt64Array].map(x => timestamp2ms(x))
+                                }
+                            
+                            case DdbType.nanotime:
+                                return {
+                                    name,
+                                    type: FieldType.time,
+                                    values: [...value as BigInt64Array].map(x => Number(nanotime2ns(x)) / 1000000)
+                                }
+                            
+                            case DdbType.nanotimestamp:
+                                return {
+                                    name,
+                                    type: FieldType.time,
+                                    values: [...value as BigInt64Array].map(x => Number(nanotimestamp2ns(x)) / 1000000)
+                                }
+                            
+                            case DdbType.datehour:
+                                return {
+                                    name,
+                                    type: FieldType.time,
+                                    values: [...value as Int32Array].map(x => datehour2ms(x))
+                                }
+                            
+                            
+                            // --- number
+                            case DdbType.short:
+                                return {
+                                    name,
+                                    type: FieldType.number,
+                                    values: [...value as Int16Array].map(x => x === nulls.int16 ? null : x)
+                                }
+                            
+                            case DdbType.int:
+                                return {
+                                    name,
+                                    type: FieldType.number,
+                                    values: [...value as Int32Array].map(x => x === nulls.int32 ? null : x)
+                                }
+                            
+                            case DdbType.float:
+                                return {
+                                    name,
+                                    type: FieldType.number,
+                                    values: [...value as Float32Array].map(x => x === nulls.float32 ? null : x)
+                                }
+                            
+                            case DdbType.double:
+                                return {
+                                    name,
+                                    type: FieldType.number,
+                                    values: [...value as Float64Array].map(x => x === nulls.double ? null : x)
+                                }
+                            
+                            case DdbType.long:
+                                return {
+                                    name,
+                                    type: FieldType.number,
+                                    values: [...(value as BigInt64Array)].map(x => x === nulls.int64 ? null : Number(x))
+                                }
+                            
+                            
+                            // --- other
+                            default:
+                                return {
+                                    name,
+                                    type: FieldType.other,
+                                    values: value
+                                }
+                        }
+                    }) as FieldDTO[]
+                    
+                    const time_field = fields.find(field => 
+                        field.type === FieldType.time)
+                        
+                    const value_field = 
+                        fields.find(field => 
+                            field.type === FieldType.number)
+                        || fields.find(field => 
+                            field.type !== FieldType.time)
+                    
+                    const rows = table.rows
+                    
+                    let datapoints: [number, number][] = new Array(rows)
+                    
+                    for (let i = 0;  i < rows;  i++)
+                        datapoints[i] = [
+                            value_field.values[i],
+                            time_field.values[i]
+                        ]
+                    
+                    return {
                         refId,
                         
-                        fields: table.value.map(col => {
-                            const { type, value, rows, name } = col
-                            
-                            switch (type) {
-                                // --- boolean
-                                case DdbType.bool:
-                                    return {
-                                        name,
-                                        type: FieldType.boolean,
-                                        values: [...value as Uint8Array].map(x => x === nulls.int8 ? null : x)
-                                    }
-                                
-                                
-                                // --- string
-                                case DdbType.string:
-                                case DdbType.symbol:
-                                    return {
-                                        name,
-                                        type: FieldType.string,
-                                        values: value
-                                    }
-                                
-                                case DdbType.symbol_extended:
-                                case DdbType.char:
-                                case DdbType.uuid:
-                                case DdbType.int128:
-                                case DdbType.ipaddr:
-                                case DdbType.blob:
-                                case DdbType.complex:
-                                case DdbType.point:
-                                    return {
-                                        name,
-                                        type: FieldType.string,
-                                        values: (() => {
-                                            let values = new Array(rows)
-                                            
-                                            for (let i = 0; i < rows; i++)
-                                                values[i] = this.formati(col, i)
-                                            
-                                            return values
-                                        })()
-                                    }
-                                
-                                
-                                // --- time
-                                case DdbType.date:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => date2ms(x))
-                                    }
-                                
-                                case DdbType.month:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => month2ms(x))
-                                    }
-                                
-                                case DdbType.time:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => time2ms(x))
-                                    }
-                                
-                                case DdbType.minute:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => minute2ms(x))
-                                    }
-                                
-                                case DdbType.second:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => second2ms(x))
-                                    }
-                                
-                                case DdbType.datetime:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => datetime2ms(x))
-                                    }
-                                
-                                case DdbType.timestamp:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as BigInt64Array].map(x => timestamp2ms(x))
-                                    }
-                                
-                                case DdbType.nanotime:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as BigInt64Array].map(x => Number(nanotime2ns(x)) / 1000000)
-                                    }
-                                
-                                case DdbType.nanotimestamp:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as BigInt64Array].map(x => Number(nanotimestamp2ns(x)) / 1000000)
-                                    }
-                                
-                                case DdbType.datehour:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => datehour2ms(x))
-                                    }
-                                
-                                
-                                // --- number
-                                case DdbType.short:
-                                    return {
-                                        name,
-                                        type: FieldType.number,
-                                        values: [...value as Int16Array].map(x => x === nulls.int16 ? null : x)
-                                    }
-                                
-                                case DdbType.int:
-                                    return {
-                                        name,
-                                        type: FieldType.number,
-                                        values: [...value as Int32Array].map(x => x === nulls.int32 ? null : x)
-                                    }
-                                
-                                case DdbType.float:
-                                    return {
-                                        name,
-                                        type: FieldType.number,
-                                        values: [...value as Float32Array].map(x => x === nulls.float32 ? null : x)
-                                    }
-                                
-                                case DdbType.double:
-                                    return {
-                                        name,
-                                        type: FieldType.number,
-                                        values: [...value as Float64Array].map(x => x === nulls.double ? null : x)
-                                    }
-                                
-                                case DdbType.long:
-                                    return {
-                                        name,
-                                        type: FieldType.number,
-                                        values: [...(value as BigInt64Array)].map(x => x === nulls.int64 ? null : Number(x))
-                                    }
-                                
-                                
-                                // --- other
-                                default:
-                                    return {
-                                        name,
-                                        type: FieldType.other,
-                                        values: value
-                                    }
-                            }
-                        }) as FieldDTO[]
-                    })
+                        datapoints
+                    }
                 })
             ),
         }
