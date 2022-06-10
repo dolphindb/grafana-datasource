@@ -90,8 +90,7 @@ https://grafana.com/docs/grafana/latest/
 
 
 
-## Development method
-
+## Build and development
 ```shell
 git clone https://github.com/dolphindb/grafana-datasource.git
 
@@ -99,8 +98,14 @@ cd grafana-datasource
 
 npm i --force
 
-npm run dev
+# 1. Build the plugin
+npm run build
+# The finished product is in the out folder. Rename out to dolphindb-datasource and compress it to .zip
 
+
+# 2. Develop plugins
+npm run dev
+# Soft link the out folder to the grafana plugins directory
 flink('d:/grafana-datasource/out/', 'e:/sdk/grafana/data/plugins/dolphindb-datasource/')
 
 # restart grafana
