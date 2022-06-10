@@ -103,8 +103,7 @@ min_refresh_interval = 1s
 (参考: https://community.grafana.com/t/how-to-change-refresh-rate-from-5s-to-1s/39008/2)
 
 
-## 开发方法
-
+## 构建及开发方法
 ```shell
 git clone https://github.com/dolphindb/grafana-datasource.git
 
@@ -112,8 +111,14 @@ cd grafana-datasource
 
 npm i --force
 
-npm run dev
+# 1. 构建插件
+npm run build
+# 完成后产物在 out 文件夹中。将 out 重命名为 dolphindb-datasource 后压缩为 .zip 即可
 
+
+# 2. 开发插件
+npm run dev
+# 将 out 文件夹软链接到 grafana plugins 目录下
 flink('d:/grafana-datasource/out/', 'e:/sdk/grafana/data/plugins/dolphindb-datasource/')
 
 # 重启 grafana
