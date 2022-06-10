@@ -88,6 +88,19 @@ dolphindb-datasource 插件支持变量，比如:
 ### 4. 参考文档学习 Grafana 使用
 https://grafana.com/docs/grafana/latest/
 
+### FAQ
+Q: 如何设置 dashboard 自动刷新间隔？
+A: 
+打开 dashboard, 在右上角刷新按钮右侧点击下拉框选择自动刷新间隔。
+如果需要自定义刷新间隔，可以打开 `dashboard settings > Time options > Auto refresh`, 输入自定义的间隔
+如果需要比 5s 更小的刷新间隔，比如 1s，需要按下面的方法操作:  
+修改 grafana 配置文件
+```ini
+[dashboards]
+min_refresh_interval = 1s
+```
+修改完后重启 grafana
+(参考: https://community.grafana.com/t/how-to-change-refresh-rate-from-5s-to-1s/39008/2)
 
 
 ## 开发方法

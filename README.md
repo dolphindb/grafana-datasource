@@ -89,6 +89,20 @@ To view the message output by `print('xxx')` in the code, or the code after vari
 https://grafana.com/docs/grafana/latest/
 
 
+### FAQ
+Q: How to set the automatic refresh interval of the dashboard?
+A:
+Open the dashboard, click the drop-down box to the right of the refresh button in the upper right corner to select the automatic refresh interval.
+If you need to customize the refresh interval, you can open `dashboard settings > Time options > Auto refresh`, enter a custom interval
+If you need a refresh interval smaller than 5s, such as 1s, you need to do the following:
+Modify the grafana configuration file
+````ini
+[dashboards]
+min_refresh_interval = 1s
+````
+Restart grafana after modification
+(Reference: https://community.grafana.com/t/how-to-change-refresh-rate-from-5s-to-1s/39008/2)
+
 
 ## Development method
 
