@@ -56,8 +56,6 @@ import { t } from './i18n/index.js'
 
 console.log(t('DolphinDB Grafana 插件已加载'))
 
-
-
 /** DDB constructor 所需参数 */
 interface DataSourceConfig extends DataSourceJsonData {
     url?: string
@@ -92,9 +90,9 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
     
     constructor (settings: DataSourceInstanceSettings<DataSourceConfig>) {
         super(settings)
-        
+
         console.log('new DolphinDB.DataSource:', settings)
-        
+
         this.settings = settings
         
         const { url, ...options } = settings.jsonData
@@ -105,7 +103,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
     
     override async testDatasource () {
         console.log('test datasource')
-        
+
         try {
             await this.ddb.connect()
             return {
@@ -150,15 +148,15 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                     let { code } = query
                     
                     code ||= ''
-                    
+
                     console.log(`${refId}.query:`, query)
-                    
+
                     if (hide || !code.trim())
                         return new MutableDataFrame({ refId, fields: [ ] })
                     
                     const code_ = tplsrv
                         .replace(
-                            code
+                            code && code
                                 .replaceAll(
                                     /\$(__)?timeFilter\b/g,
                                     () =>
@@ -175,14 +173,14 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                             scopedVars,
                             var_formatter
                         )
+
                         
-                    
-                    console.log(`${refId}.code:`)
-                    console.log(code_)
-                    
-                    
+                        console.log(`${refId}.code:`)
+                        console.log(code_)
+                      
+
                     const table = await this.ddb.eval<DdbObj<DdbObj<DdbVectorValue>[]>>(code_)
-                    
+
                     if (table.form !== DdbForm.table)
                         throw new Error(t('Query 代码的最后一条语句需要返回 table，实际返回的是: {{value}}', { value: table.toString() }))
                     
@@ -376,18 +374,18 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                             field.type !== FieldType.time)
                     
                     const rows = table.rows
-                    
+
                     let datapoints: [number, number][] = new Array(rows)
                     
                     for (let i = 0;  i < rows;  i++)
                         datapoints[i] = [
-                            value_field.values[i],
-                            time_field.values[i]
+                            value_field?.values[i],
+                            time_field?.values[i]
                         ]
-                    
+
                     return {
                         refId,
-                        
+                        fields,
                         datapoints
                     }
                 })
@@ -395,6 +393,12 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
         }
     }
     
+    async reverseFunction(query:string){
+        return await this.ddb.eval(
+            (getDataSourceSrv() as any).templateSrv
+            .replace(query, { }, var_formatter)
+        )
+    }
     
     override async metricFindQuery (query: string, options: any): Promise<MetricFindValue[]> {
         console.log('metricFindQuery:', { query, options })
@@ -461,7 +465,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
             }
             
             case DdbForm.table: {
-                if ((result as DdbObj<DdbObj[]>).value.length === 1) {
+                if ((result as DdbObj<DdbObj[]>).value && (result as DdbObj<DdbObj[]>).value.length === 1) {
                     let values = new Array(result.value[0].rows)
                     
                     for (let i = 0; i < result.value[0].rows; i++) {
@@ -516,7 +520,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
             case DdbType.blob: {
                 const value = (obj.form === DdbForm.scalar ? obj.value : obj.value[index]) as Uint8Array
 
-                return value.length > 100 ?
+                return value && value.length > 100 ?
                     decoder.decode(
                         value.subarray(0, 98)
                     ) + '…'
@@ -553,7 +557,7 @@ function ConfigEditor ({
     options.jsonData.password ??= '123456'
     options.jsonData.python ??= false
     
-    
+
     return <div className='gf-form-group'>
         <FormField 
             tooltip={t('数据库连接地址 (WebSocket URL), 如: ws://127.0.0.1:8848, wss://dolphindb.com (HTTPS 加密)')} 
@@ -660,7 +664,7 @@ function QueryEditor (
     }: QueryEditorProps<DataSource, DdbDataQuery, DataSourceJsonData> & { height?: number }
 ) {
     const [query, set_query] = useState(
-        code.replaceAll('\r\n', '\n')
+        code && code.replaceAll('\r\n', '\n')
     )
     
     return <div className='query-editor'>
@@ -670,12 +674,12 @@ function QueryEditor (
             onBlur={() => {
                 onChange({
                     refId,
-                    code: query.replaceAll('\r\n', '\n')
+                    code:query && query.replaceAll('\r\n', '\n')
                 })
             }}
             onChange={(query) => {
                 set_query(
-                    query.replaceAll('\r\n', '\n')
+                    query && query.replaceAll('\r\n', '\n')
                 )
             }}
         />
