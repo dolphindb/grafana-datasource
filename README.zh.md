@@ -69,6 +69,8 @@ http://localhost:3000/admin/plugins?filterBy=all&filterByType=all&q=dolphindb
 ### 2. 新建 DolphinDB 数据源
 打开 http://localhost:3000/datasources 或点击左侧导航的 `Configuration > Data sources` 添加数据源，过滤搜索 dolphindb, 配置数据源后点 `Save & Test` 保存数据源
 
+注: 新版插件使用 WebSocket 协议与 DolphinDB 数据库通信，在数据库配置中 URL 需要以 `ws://` 或者 `wss://` 开头，从旧版插件升级的用户需要将数据库 URL 从 `http://` 或 `https://` 修改为 `ws://` 或 `wss://`
+
 ### 3. 新建 Panel, 编写查询脚本, 可视化 DolphinDB 时序数据
 打开或新建 Dashboard, 编辑或新建 Panel, 在 Panel 的 Data source 属性中选择上一步添加的数据源  
 编写查询脚本，代码的最后一条语句需要返回 table  

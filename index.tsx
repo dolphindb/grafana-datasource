@@ -40,6 +40,7 @@ import {
     DdbForm,
     type DdbObj,
     format,
+    formati,
     datetime2ms,
     month2ms,
     minute2ms,
@@ -53,7 +54,6 @@ import {
     nulls,
     type DdbVectorValue,
     type DdbValue,
-    type DdbSymbolExtendedValue,
 } from 'dolphindb/browser.js'
 import { keywords, constants } from 'dolphindb/language.js'
 
@@ -93,8 +93,6 @@ interface DdbDataQuery extends DataQuery {
     code: string
 }
 
-
-let decoder = new TextDecoder()
 
 function var_formatter (value: string | string[], variable: any, default_formatter: Function) {
     if (typeof value === 'string')
@@ -467,59 +465,10 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
     
     
     formati (obj: DdbObj<DdbValue>, index: number): string {
-        switch (obj.type) {
-            case DdbType.string:
-            case DdbType.symbol:
-                return obj.value[index]
-            
-            case DdbType.char: {
-                const c = format(DdbType.char, obj.value[index], obj.le)
-                return c.startsWith("'") ?
-                    c.slice(1, -1)
-                :
-                    c
-            }
-            
-            case DdbType.symbol_extended: {
-                const { base, data } = obj.value as DdbSymbolExtendedValue
-                return base[data[index]]
-            }
-            
-            case DdbType.uuid:
-            case DdbType.int128:
-            case DdbType.ipaddr:
-                return format(
-                    obj.type,
-                    (obj.value as Uint8Array).subarray(16 * index, 16 * (index + 1)),
-                    obj.le
-                )
-            
-            case DdbType.blob: {
-                const value = (obj.form === DdbForm.scalar ? obj.value : obj.value[index]) as Uint8Array
-
-                return value.length > 100 ?
-                    decoder.decode(
-                        value.subarray(0, 98)
-                    ) + '…'
-                    :
-                    decoder.decode(value)
-            }
-            
-            case DdbType.complex:
-            case DdbType.point:
-                return format(
-                    obj.type,
-                    (obj.value as Float64Array).subarray(2 * index, 2 * (index + 1)),
-                    obj.le
-                )
-            
-            default:
-                return format(
-                    obj.type,
-                    obj.form === DdbForm.scalar ? obj.value : obj.value[index],
-                    obj.le
-                )
-        }
+        let str = formati(obj, index)
+        if (obj.type === DdbType.char && str.startsWith("'"))
+            str = str.slice(1, -1)
+        return str
     }
 }
 

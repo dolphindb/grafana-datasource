@@ -69,6 +69,8 @@ The initial login name and password are both admin
 ### 2. Create a new DolphinDB data source
 Open http://localhost:3000/datasources or click `Configuration > Data sources` in the left navigation to add a data source, filter and search for dolphindb, configure the data source and click `Save & Test` to save the data source
 
+Note: The new version of the plugin uses the WebSocket protocol to communicate with the DolphinDB database. The URL needs to start with `ws://` or `wss://` in the database configuration. Users upgrading from the old version of the plugin need to change the database URL from `http://` ` or `https://` to `ws://` or `wss://`
+
 ### 3. Create a new Panel, write query scripts, and visualize DolphinDB time series data
 Open or create a new Dashboard, edit or create a new Panel, select the data source added in the previous step in the Data source property of the Panel
 Write a query script, the last statement of the code needs to return a table

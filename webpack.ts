@@ -1,6 +1,13 @@
 import { fileURLToPath } from 'url'
 import path from 'upath'
-import Webpack from 'webpack'
+
+import {
+    default as Webpack,
+    type Configuration,
+    type Compiler,
+    type Watching,
+    type Stats,
+} from 'webpack'
 
 
 import webpack_sources from 'webpack-sources'
@@ -55,7 +62,7 @@ export async function copy_files () {
 
 
 
-const config: Webpack.Configuration = {
+const config: Configuration = {
     name: 'DdbGrafanaWebpackCompiler',
     
     mode: 'development',
@@ -264,9 +271,9 @@ const config: Webpack.Configuration = {
 }
 
 export let webpack = {
-    compiler: null as Webpack.Compiler,
+    compiler: null as Compiler,
     
-    watcher: null as Webpack.Watching,
+    watcher: null as Watching,
     
     init_compiler () {
         this.compiler = Webpack(config)
@@ -300,7 +307,7 @@ export let webpack = {
         
         let first = true
         
-        return new Promise<Webpack.Stats>( resolve => {
+        return new Promise<Stats>( resolve => {
             this.watcher = this.compiler.watch({
                 ignored: [
                     '**/node_modules/',
@@ -332,11 +339,6 @@ export let webpack = {
     
     async build () {
         config.mode = 'production'
-        
-        ;(config.stats as any).assets = true
-        ;(config.stats as any).assetsSpace = 20
-        ;(config.stats as any).modules = true
-        ;(config.stats as any).modulesSpace = 20
         
         this.init_compiler()
         
