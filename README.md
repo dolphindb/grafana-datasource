@@ -43,6 +43,8 @@ allow_loading_unsigned_plugins = dolphindb-datasource
 Note: Grafana needs to be restarted every time a configuration item is modified
 
 ### 4. Restart the Grafana process or service
+Open Task Manager > Services > Find Grafana Service > Right Click Restart
+
 https://grafana.com/docs/grafana/latest/installation/restart-grafana/
 
 
