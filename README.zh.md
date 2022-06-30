@@ -43,6 +43,8 @@ allow_loading_unsigned_plugins = dolphindb-datasource
 注：每次修改配置项后，需重启 Grafana
 
 ### 4. 重启 Grafana 进程或服务
+打开任务管理器 > 服务 > 找到 Grafana 服务 > 右键重启
+
 https://grafana.com/docs/grafana/latest/installation/restart-grafana/
 
 
