@@ -175,6 +175,9 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                     
                     const tplsrv = getTemplateSrv()
                     
+                    ;(from as any)._isUTC = false
+                    ;(to as any)._isUTC = false
+                    
                     const code_ = tplsrv
                         .replace(
                             code
