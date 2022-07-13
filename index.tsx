@@ -154,6 +154,8 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                 from,
                 to,
             },
+            startTime,
+            endTime,
             scopedVars,
             targets: queries,
         } = request
@@ -174,6 +176,9 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                         return new MutableDataFrame({ refId, fields: [ ] })
                     
                     const tplsrv = getTemplateSrv()
+                    
+                    ;(from as any)._isUTC = false
+                    ;(to as any)._isUTC = false
                     
                     const code_ = tplsrv
                         .replace(
