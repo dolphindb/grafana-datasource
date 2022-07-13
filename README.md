@@ -43,6 +43,8 @@ allow_loading_unsigned_plugins = dolphindb-datasource
 Note: Grafana needs to be restarted every time a configuration item is modified
 
 ### 4. Restart the Grafana process or service
+Open Task Manager > Services > Find Grafana Service > Right Click Restart
+
 https://grafana.com/docs/grafana/latest/installation/restart-grafana/
 
 
@@ -69,6 +71,8 @@ The initial login name and password are both admin
 ### 2. Create a new DolphinDB data source
 Open http://localhost:3000/datasources or click `Configuration > Data sources` in the left navigation to add a data source, filter and search for dolphindb, configure the data source and click `Save & Test` to save the data source
 
+Note: The new version of the plugin uses the WebSocket protocol to communicate with the DolphinDB database. The URL needs to start with `ws://` or `wss://` in the database configuration. Users upgrading from the old version of the plugin need to change the database URL from `http://` ` or `https://` to `ws://` or `wss://`
+
 ### 3. Create a new Panel, write query scripts, and visualize DolphinDB time series data
 Open or create a new Dashboard, edit or create a new Panel, select the data source added in the previous step in the Data source property of the Panel
 Write a query script, the last statement of the code needs to return a table
@@ -89,9 +93,22 @@ To view the message output by `print('xxx')` in the code, or the code after vari
 https://grafana.com/docs/grafana/latest/
 
 
+### FAQ
+Q: How to set the automatic refresh interval of the dashboard?
+A:
+Open the dashboard, click the drop-down box to the right of the refresh button in the upper right corner to select the automatic refresh interval.
+If you need to customize the refresh interval, you can open `dashboard settings > Time options > Auto refresh`, enter a custom interval
+If you need a refresh interval smaller than 5s, such as 1s, you need to do the following:
+Modify the grafana configuration file
+````ini
+[dashboards]
+min_refresh_interval = 1s
+````
+Restart grafana after modification
+(Reference: https://community.grafana.com/t/how-to-change-refresh-rate-from-5s-to-1s/39008/2)
 
-## Development method
 
+## Build and development
 ```shell
 git clone https://github.com/dolphindb/grafana-datasource.git
 
@@ -99,8 +116,14 @@ cd grafana-datasource
 
 npm i --force
 
-npm run dev
+# 1. Build the plugin
+npm run build
+# The finished product is in the out folder. Rename out to dolphindb-datasource and compress it to .zip
 
+
+# 2. Develop plugins
+npm run dev
+# Soft link the out folder to the grafana plugins directory
 flink('d:/grafana-datasource/out/', 'e:/sdk/grafana/data/plugins/dolphindb-datasource/')
 
 # restart grafana
