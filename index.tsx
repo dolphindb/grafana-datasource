@@ -154,6 +154,9 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                     if (hide || !code.trim())
                         return new MutableDataFrame({ refId, fields: [ ] })
                     
+                    ;(from as any)._isUTC = false
+                    ;(to as any)._isUTC = false
+                    
                     const code_ = tplsrv
                         .replace(
                             code && code
