@@ -56,7 +56,7 @@ DolphinDB 将 DolphinDB datasource 插件的 Grafana 服务集成为一个 Docke
 - 执行如下命令，从远程 Docker 仓库拉取镜像：
 
   ```shell
-  $ docker pull gra_ddb_ds:v1
+  $ docker pull dolphindb/dolphindb-grafana:9.1.0
   ```
 
 - 执行如下命令，创建一个名为 ddb_gra 的容器：
