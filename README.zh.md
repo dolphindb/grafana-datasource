@@ -51,7 +51,7 @@ https://grafana.com/docs/grafana/latest/installation/restart-grafana/
 
 DolphinDB 将 DolphinDB datasource 插件的 Grafana 服务集成为一个 Docker 镜像，快速构建一个 Grafana 连接 DolphinDB 数据源功能的 Docker 容器。通过 Docker 容器部署 Grafana 插件，可以节省过于繁琐的配置步骤。具体安装步骤如下：
 
-- 本节安装的前提为准备一个预先定义好的配置文件 grafana.ini，在特定路径（本文为/ddbdocker）创建 Docker 容器；
+- 本节安装的前提为准备一个预先定义好的配置文件 [grafana.ini](grafana.ini)，在特定路径（本文为/ddbdocker）创建 Docker 容器；
 
 - 执行如下命令，从远程 Docker 仓库拉取镜像：
 
