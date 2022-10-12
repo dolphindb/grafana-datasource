@@ -31,7 +31,7 @@ DolphinDB 开发了 Grafana 数据源插件 (dolphindb-datasource)，让用户�
 
 如果不存在 plugins 这一层目录，可以手动创建该文件夹
 
-### 3. 修改 grafana 配置文件，使其允许加载未签名的 dolphindb-datasource 插件
+### 3. 修改 Grafana 配置文件，使其允许加载未签名的 dolphindb-datasource 插件
 阅读 https://grafana.com/docs/grafana/latest/administration/configuration/#configuration-file-location  
 打开并编辑配置文件： 
 
@@ -47,9 +47,41 @@ allow_loading_unsigned_plugins = dolphindb-datasource
 
 https://grafana.com/docs/grafana/latest/installation/restart-grafana/
 
+### 5. Docker 环境下实现 grafana 连接 DolphinDB 数据源
 
-### 5. 验证已加载插件
-在 grafana 启动日志中可以看到类似以下的日志  
+DolphinDB 将 DolphinDB datasource 插件的 Grafana 服务集成为一个 Docker 镜像，快速构建一个 Grafana 连接 DolphinDB 数据源功能的 Docker 容器。通过 Docker 容器部署 Grafana 插件，可以节省过于繁琐的配置步骤。具体安装步骤如下：
+
+- 本节安装的前提为准备一个预先定义好的配置文件 [grafana.ini](grafana.ini)，在特定路径（本文为/ddbdocker）创建 Docker 容器；
+
+- 执行如下命令，从远程 Docker 仓库拉取镜像：
+
+  ```shell
+  $ docker pull dolphindb/dolphindb-grafana:9.1.0
+  ```
+
+- 执行如下命令，创建一个名为 ddb_gra 的容器：
+
+  ```shell
+  $ docker run -itd --name ddb_gra \
+    -p 3000:3000 
+    -v /ddbdocker/grafana.ini:/etc/grafana/grafana.ini \
+    gra_ddb_ds:v1 sh
+  ```
+
+  - 参数解释：
+    - --name：所创建的容器名称；
+    - -p：将容器的端口映射到宿主机上，以实现通过宿主机端口访问容器内的服务，本文为 Grafana 服务；
+    - -v：将配置好的 grafana.ini 映射到容器内，并覆盖原有默认的 grafana.ini。如需使用容器内的默认配置，可不指定 -v 参数；
+    - gra_ddb_ds:v1：Docker 镜像的名称。必须填入完整的镜像名称。
+
+  预期输出（容器的完整 id）：
+
+  ```
+  3cdfbab788d0054a80c450e67d5273fb155e30b26a6ec6ef8821b832522474f5
+  ```
+
+### 6. 验证已加载插件
+在 Grafana 启动日志中可以看到类似以下的日志  
 ```log
 WARN [05-19|12:05:48] Permitting unsigned plugin. This is not recommended logger=plugin.signature.validator pluginID=dolphindb-datasource pluginDir=<grafana 安装目录>/data/plugins/dolphindb-datasource
 ```
@@ -81,7 +113,7 @@ http://localhost:3000/admin/plugins?filterBy=all&filterByType=all&q=dolphindb
 
 dolphindb-datasource 插件支持变量，比如:
 - `$__timeFilter` 变量: 值为面板上方的时间轴区间，比如当前的时间轴区间是 `2022-02-15 00:00:00 - 2022.02.17 00:00:00` ，那么代码中的 `$__timeFilter` 会被替换为 `pair(2022.02.15 00:00:00.000, 2022.02.17 00:00:00.000)`
-- `$__interval` 和 `$__interval_ms` 变量: 值为 grafana 根据时间轴区间长度和屏幕像素点自动计算的时间分组间隔。`$__interval` 会被替换为 DolphinDB 中对应的 DURATION 类型; `$__interval_ms` 会被替换为毫秒数 (整型)
+- `$__interval` 和 `$__interval_ms` 变量: 值为 Grafana 根据时间轴区间长度和屏幕像素点自动计算的时间分组间隔。`$__interval` 会被替换为 DolphinDB 中对应的 DURATION 类型; `$__interval_ms` 会被替换为毫秒数 (整型)
 - query 变量: 通过 SQL 查询生成动态值或选项列表
 
 更多变量请查看 https://grafana.com/docs/grafana/latest/variables/
@@ -99,12 +131,12 @@ A:
 
 如果需要自定义刷新间隔，可以打开 `dashboard settings > Time options > Auto refresh`, 输入自定义的间隔
 如果需要定义比 5s 更小的刷新间隔，比如 1s，需要按下面的方法操作:  
-修改 grafana 配置文件
+修改 Grafana 配置文件
 ```ini
 [dashboards]
 min_refresh_interval = 1s
 ```
-修改完后重启 grafana  
+修改完后重启 Grafana  
 (参考: https://community.grafana.com/t/how-to-change-refresh-rate-from-5s-to-1s/39008/2)
 
 
@@ -123,8 +155,8 @@ npm run build
 
 # 2. 开发插件
 npm run dev
-# 将 out 文件夹软链接到 grafana plugins 目录下
+# 将 out 文件夹软链接到 Grafana plugins 目录下
 flink('d:/grafana-datasource/out/', 'e:/sdk/grafana/data/plugins/dolphindb-datasource/')
 
-# 重启 grafana
+# 重启 Grafana
 ```
