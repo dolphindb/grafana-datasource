@@ -63,7 +63,7 @@ export async function copy_files () {
 
 
 const config: Configuration = {
-    name: 'DdbGrafanaWebpackCompiler',
+    name: 'DdbGrafana',
     
     mode: 'development',
     
@@ -238,10 +238,7 @@ const config: Configuration = {
         hints: false,
     },
     
-    cache: {
-        type: 'filesystem',
-        compression: 'brotli',
-    },
+    cache: false,
     
     ignoreWarnings: [
         /Failed to parse source map/
@@ -273,9 +270,11 @@ const config: Configuration = {
 export let webpack = {
     compiler: null as Compiler,
     
-    watcher: null as Watching,
     
-    init_compiler () {
+    async build (production: boolean) {
+        if (production)
+            config.mode = 'production'
+        
         this.compiler = Webpack(config)
         
         // 删除 import 注释防止 SystemJS 加载模块失败
@@ -300,62 +299,19 @@ export let webpack = {
                     )
                 })
         })
-    },
-    
-    async start () {
-        this.init_compiler()
         
-        let first = true
         
-        return new Promise<Stats>( resolve => {
-            this.watcher = this.compiler.watch({
-                ignored: [
-                    '**/node_modules/',
-                ],
-                aggregateTimeout: 500
-            }, (error, stats) => {
-                if (error)
-                    console.log(error)
-                console.log(
-                    stats.toString(config.stats)
-                )
-                if (!first)
-                    return
-                first = false
-                resolve(stats)
-            })
-        })
-    },
-    
-    
-    async stop () {
-        if (!this.watcher)
-            return
-        return new Promise<Error>(resolve => {
-            this.watcher.close(resolve)
-        })
-    },
-    
-    
-    async build () {
-        config.mode = 'production'
-        
-        this.init_compiler()
-        
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<Stats>((resolve, reject) => {
             this.compiler.run((error, stats) => {
-                if (error || stats.hasErrors()) {
-                    console.log(
-                        stats.toString(config.stats)
-                    )
-                    reject(error || stats)
-                    return
-                }
+                if (stats)
+                    console.log(stats.toString(config.stats))
                 
-                console.log(
-                    stats.toString(config.stats)
-                )
-                resolve()
+                if (error)
+                    reject(error)
+                else if (stats.hasErrors())
+                    reject(new Error('构建失败'))
+                else
+                    resolve(stats)
             })
         })
         

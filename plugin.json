@@ -4,6 +4,7 @@
     "name": "DolphinDB",
     "id": "dolphindb-datasource",
     "metrics": true,
+    "streaming": true,
     "info": {
         "description": "DolphinDB Grafana Plugin",
         "author": {

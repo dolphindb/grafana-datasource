@@ -14,24 +14,27 @@
 
 Grafana is an open source data visualization web application that is good at dynamically displaying time series data and supports multiple data sources. Users can display data graphs in the browser through Grafana by configuring the connected data source and writing query scripts
 
-DolphinDB has developed a Grafana data source plugin (dolphindb-datasource), which enables users to write query scripts on the Grafana panel (dashboard), interact with DolphinDB (based on WebSocket), and visualize DolphinDB time series data
+DolphindB has developed Grafana data source plug-in (DolphindB-Datasource), allowing users to interact with DolphinDB by writing query scripts and  subscribing streaming data tables on the Grafana panel.
 
 <img src='./demo.png' width='1200'>
 
 ## Installation
-### 1. Install Grafana
+### Method 1: Install Grafana and add plug -ins
+#### 1.1. 安装 Grafana
 Go to Grafana official website: https://grafana.com/oss/grafana/ , install the latest open source version (OSS, Open-Source Software)
 
-### 2. Install the dolphindb-datasource plugin
+#### 1.2. Install the dolphindb-datasource plugin
 In Releases (https://github.com/dolphindb/grafana-datasource/releases) download the latest version of the plugin zip, such as `dolphindb-datasource.2022.xx.xx.xx.zip`
 
-Unzip the dolphindb-datasource folder in the compressed package to the following path:
-- Windows: `<grafana installation directory>/data/plugins/dolphindb-datasource`
-- Linux: `/var/lib/grafana/plugins/`
+Unzip the dolphindb-datasource folder in the compressed package to the plugin directory of grafana:
+- Windows: `<grafana installation directory>/data/plugins/`
+- Linux:
+     - grafana is obtained by decompressing the zip archive: `<grafana installation directory>/data/plugins/`
+     - grafana is installed via the package manager: `/var/lib/grafana/plugins/`
 
 If the plugins level directory does not exist, you can manually create this folder
 
-### 3. Modify the grafana configuration file to allow loading the unsigned dolphindb-datasource plugin
+#### 1.3. Modify the Grafana configuration file so that it allows to load the unsigned dolphindb-datasource plugin
 Read the following documents to open and edit configuration files
 https://grafana.com/docs/grafana/latest/administration/configuration/#configuration-file-location
 
@@ -42,13 +45,43 @@ allow_loading_unsigned_plugins = dolphindb-datasource
 
 Note: Grafana needs to be restarted every time a configuration item is modified
 
-### 4. Restart the Grafana process or service
+### 1.4. Restart the Grafana process or service
 Open Task Manager > Services > Find Grafana Service > Right Click Restart
 
 https://grafana.com/docs/grafana/latest/installation/restart-grafana/
 
 
-### 5. Verify that the plugin is loaded
+### Method 2: Use Grafana Docker mirror containing dolphindb-datasource plugin
+
+Dolphindb integrates the DolphindB-DataSource plugin into a Docker mirror that can be quickly deployed through the Docker container to save too tedious configuration steps. The specific installation steps are as follows:
+
+#### 2.1. Download the configuration file [grafana.ini](./grafana.ini) to a certain path (this article is /ddbdocker/grafana.ini)
+
+#### 2.2. Execute the following command, pull the mirror image from the remote docker warehouse
+```shell
+docker pull dolphindb/dolphindb-grafana:9.1.0
+```
+
+#### 2.3. Execute the following command to create a container called ddb_gra:
+```shell
+docker run -itd --name ddb_gra \
+  -p 3000:3000 
+  -v /ddbdocker/grafana.ini:/etc/grafana/grafana.ini \
+  gra_ddb_ds:v1 sh
+```
+
+Parameter explanation:
+ - --name: The container name created
+ - --P: Map the ports of the container to the host to realize the service in the container through the host port. This article is the Grafana service
+ - --V: Map the configured grafana.ini into the container and cover the original default Grafana.ini. If you need to use the default configuration in the container, you do not specify the -V parameter
+ - -gra_ddb_ds: V1: Docker mirror name. Must be filled in a complete mirror name
+
+Expecting output (complete ID of the container):
+```
+3cdfbab788d0054a80c450e67d5273fb155e30b26a6ec6ef8821b832522474f5
+```
+
+### Verify that the plugin is loaded
 You can see a log similar to the following in the grafana startup log
 ````log
 WARN [05-19|12:05:48] Permitting unsigned plugin. This is not recommended logger=plugin.signature.validator pluginID=dolphindb-datasource pluginDir=<grafana installation directory>/data/plugins/dolphindb-datasource
@@ -73,11 +106,15 @@ Open http://localhost:3000/datasources or click `Configuration > Data sources` i
 
 Note: The new version of the plugin uses the WebSocket protocol to communicate with the DolphinDB database. The URL needs to start with `ws://` or `wss://` in the database configuration. Users upgrading from the old version of the plugin need to change the database URL from `http://` ` or `https://` to `ws://` or `wss://`
 
-### 3. Create a new Panel, write query scripts, and visualize DolphinDB time series data
-Open or create a new Dashboard, edit or create a new Panel, select the data source added in the previous step in the Data source property of the Panel
-Write a query script, the last statement of the code needs to return a table
-After writing, press `ctrl + s` to save, or click the refresh button on the page (Refresh dashboard), you can send the Query to the DolphinDB database to run and display the chart  
-The height of the code editing box can be adjusted by dragging the bottom
+### 3. Create a new Panel, writing query scripts or subscribing streaming data tables to visualize DolphinDB's time-series data
+Open or create new Dashboard, edit or create a new Panel, select the data source added to the Panel's data source attribute
+#### 3.1. Write the script to execute the query to visulize the time-series table returned
+Set the query type to `script`  
+Write a query script, the last statement of the code needs to return a table  
+After writing, press `Ctrl + S` to save, or click the refresh button on the page (Refresh dashboard), you can send the Query to the DolphinDB database to run and display the chart  
+The height of the code editing box can be adjusted by dragging the bottom  
+
+Click to save the `Save` button in the upper right corner to save the Panel configuration
 
 The dolphindb-datasource plugin supports variables, such as:
 - `$__timeFilter` variable: the value is the time axis interval above the panel. For example, the current time axis interval is `2022-02-15 00:00:00 - 2022.02.17 00:00:00` , then the ` $__timeFilter` will be replaced with `pair(2022.02.15 00:00:00.000, 2022.02.17 00:00:00.000)`
@@ -89,6 +126,15 @@ For more variables see https://grafana.com/docs/grafana/latest/variables/
 
 To view the message output by `print('xxx')` in the code, or the code after variable substitution (interpolation), you can press `F12` or `Ctrl + Shift + I` or `Right click > Inspect` to open the browser development Or debug tools (devtools), switch to the console (Console) panel to view
 
+#### 3.2. Subscribe to and visualize the streaming data table in DolphinDB
+Requirements: DolphinDB Server version is not less than 2.00.9 or 1.30.21  
+Set the query type to `streaming`  
+Fill in the streaming data table name to be subscribed to  
+Click the `Temporarily Store` button  
+Change the time range to `Last 5 Minutes` (need to include the current time, such as Last x Hour/Minutes/Seconds instead of the historical time interval, otherwise you will not see the data)
+
+Click to save the `Save` button in the upper right corner to save the Panel configuration
+
 ### 4. Learn how to use Grafana by referring to the documentation
 https://grafana.com/docs/grafana/latest/
 
@@ -96,8 +142,11 @@ https://grafana.com/docs/grafana/latest/
 ### FAQ
 Q: How to set the automatic refresh interval of the dashboard?
 A:
-Open the dashboard, click the drop-down box to the right of the refresh button in the upper right corner to select the automatic refresh interval.
-If you need to customize the refresh interval, you can open `dashboard settings > Time options > Auto refresh`, enter a custom interval
+For the type of script, open Dashboard, and refresh the right side to the right side of the right corner to click the drop -down box to select the automatic refresh interval  
+For stream data table types, the data is real-time, no settings are required. 
+
+If you need to customize the refresh interval, you can open `dashboard settings > Time options > Auto refresh`, enter a custom interval  
+
 If you need a refresh interval smaller than 5s, such as 1s, you need to do the following:
 Modify the grafana configuration file
 ````ini
