@@ -1,6 +1,8 @@
 import './index.sass'
 
-import { default as React, useRef, useState } from 'react'
+import { default as React, useRef, useState, useEffect } from 'react'
+
+import { Observable, merge, Subscriber } from 'rxjs'
 
 import { Resizable } from 're-resizable'
 
@@ -12,6 +14,9 @@ import {
     DataSourceApi,
     MutableDataFrame,
     FieldType,
+    LoadingState,
+    CircularDataFrame,
+    SelectableValue,
     type DataQuery,
     type DataQueryRequest,
     type DataSourcePluginOptionsEditorProps,
@@ -29,7 +34,8 @@ import {
     InlineSwitch,
     Button,
     Icon,
-    useTheme2
+    useTheme2,
+    Select,
 } from '@grafana/ui'
 
 import type * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js'
@@ -53,7 +59,7 @@ import {
     nanotimestamp2ns,
     nulls,
     type DdbVectorValue,
-    type DdbValue,
+    type DdbVectorObj,
 } from 'dolphindb/browser.js'
 import { keywords, constants } from 'dolphindb/language.js'
 
@@ -90,7 +96,12 @@ interface DataSourceConfig extends DataSourceJsonData {
 }
 
 interface DdbDataQuery extends DataQuery {
-    code: string
+    is_streaming: boolean
+    code?: string
+    streaming?: {
+        table: string
+        action?: string
+    }
 }
 
 
@@ -145,309 +156,197 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
         }
     }
     
-    
-    override async query (request: DataQueryRequest<DdbDataQuery>): Promise<DataQueryResponse> {
-        console.log('query.request:', request)
-        
-        const {
-            range: {
-                from,
-                to,
-            },
-            scopedVars,
-            targets: queries,
-        } = request
-        
-        
-        return {
-            data: await Promise.all(
-                queries.map(async query => {
-                    const { refId, hide } = query
+    override query (request: DataQueryRequest<DdbDataQuery>): Observable<DataQueryResponse> {
+        const { range: { from, to }, scopedVars } = request
+        const streams = request.targets.map(query => {
+            const { refId, hide, is_streaming } = query
+            let { code } = query
+            code ||= ''
+            // cope with streaming table datasource
+            const { url, ...options } = this.settings.jsonData
+            const ds = this
+            if (is_streaming)
+                return new Observable<DataQueryResponse>((subscriber: Subscriber<DataQueryResponse>) => {
+                    const { streaming: { table, action } } = query
                     
-                    let { code } = query
-                    
-                    code ||= ''
-                    
-                    console.log(`${refId}.query:`, query)
-                    
-                    if (hide || !code.trim())
-                        return new MutableDataFrame({ refId, fields: [ ] })
-                    
-                    const tplsrv = getTemplateSrv()
-                    
-                    ;(from as any)._isUTC = false
-                    ;(to as any)._isUTC = false
-                    
-                    const code_ = tplsrv
-                        .replace(
-                            code
-                                .replaceAll(
-                                    /\$(__)?timeFilter\b/g,
-                                    () =>
-                                        'pair(' +
-                                            from.format('YYYY.MM.DD HH:mm:ss.SSS') + 
-                                            ', ' +
-                                            to.format('YYYY.MM.DD HH:mm:ss.SSS') +
-                                        ')'
-                                ).replaceAll(
-                                    /\$__interval\b/g,
-                                    () =>
-                                        tplsrv.replace('$__interval', scopedVars).replace(/h$/, 'H')
-                                ),
-                            scopedVars,
-                            var_formatter
-                        )
-                    
-                    console.log(`${refId}.code:`)
-                    console.log(code_)
-                    
-                    const table = await this.ddb.eval<DdbObj<DdbObj<DdbVectorValue>[]>>(code_)
-                    
-                    if (table.form !== DdbForm.table)
-                        throw new Error(t('Query 代码的最后一条语句需要返回 table，实际返回的是: {{value}}', { value: table.toString() }))
-                    
-                    return new MutableDataFrame({
-                        refId,
-                        
-                        fields: table.value.map(col => {
-                            const { type, value, rows, name } = col
-                            
-                            switch (type) {
-                                // --- boolean
-                                case DdbType.bool:
-                                    return {
-                                        name,
-                                        type: FieldType.boolean,
-                                        values: [...value as Uint8Array].map(x => x === nulls.int8 ? null : x)
-                                    }
-                                
-                                
-                                // --- string
-                                case DdbType.string:
-                                case DdbType.symbol:
-                                    return {
-                                        name,
-                                        type: FieldType.string,
-                                        values: value
-                                    }
-                                
-                                case DdbType.symbol_extended:
-                                case DdbType.char:
-                                case DdbType.uuid:
-                                case DdbType.int128:
-                                case DdbType.ipaddr:
-                                case DdbType.blob:
-                                case DdbType.complex:
-                                case DdbType.point:
-                                    return {
-                                        name,
-                                        type: FieldType.string,
-                                        values: (() => {
-                                            let values = new Array(rows)
-                                            
-                                            for (let i = 0; i < rows; i++)
-                                                values[i] = this.formati(col, i)
-                                            
-                                            return values
-                                        })()
-                                    }
-                                
-                                
-                                // --- time
-                                case DdbType.date:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => date2ms(x))
-                                    }
-                                
-                                case DdbType.month:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => month2ms(x))
-                                    }
-                                
-                                case DdbType.time:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => time2ms(x))
-                                    }
-                                
-                                case DdbType.minute:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => minute2ms(x))
-                                    }
-                                
-                                case DdbType.second:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => second2ms(x))
-                                    }
-                                
-                                case DdbType.datetime:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => datetime2ms(x))
-                                    }
-                                
-                                case DdbType.timestamp:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as BigInt64Array].map(x => timestamp2ms(x))
-                                    }
-                                
-                                case DdbType.nanotime:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as BigInt64Array].map(x => Number(nanotime2ns(x)) / 1000000)
-                                    }
-                                
-                                case DdbType.nanotimestamp:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as BigInt64Array].map(x => Number(nanotimestamp2ns(x)) / 1000000)
-                                    }
-                                
-                                case DdbType.datehour:
-                                    return {
-                                        name,
-                                        type: FieldType.time,
-                                        values: [...value as Int32Array].map(x => datehour2ms(x))
-                                    }
-                                
-                                
-                                // --- number
-                                case DdbType.short:
-                                    return {
-                                        name,
-                                        type: FieldType.number,
-                                        values: [...value as Int16Array].map(x => x === nulls.int16 ? null : x)
-                                    }
-                                
-                                case DdbType.int:
-                                    return {
-                                        name,
-                                        type: FieldType.number,
-                                        values: [...value as Int32Array].map(x => x === nulls.int32 ? null : x)
-                                    }
-                                
-                                case DdbType.float:
-                                    return {
-                                        name,
-                                        type: FieldType.number,
-                                        values: [...value as Float32Array].map(x => x === nulls.float32 ? null : x)
-                                    }
-                                
-                                case DdbType.double:
-                                    return {
-                                        name,
-                                        type: FieldType.number,
-                                        values: [...value as Float64Array].map(x => x === nulls.double ? null : x)
-                                    }
-                                
-                                case DdbType.long:
-                                    return {
-                                        name,
-                                        type: FieldType.number,
-                                        values: [...(value as BigInt64Array)].map(x => x === nulls.int64 ? null : Number(x))
-                                    }
-                                
-                                
-                                // --- other
-                                default:
-                                    return {
-                                        name,
-                                        type: FieldType.other,
-                                        values: value
-                                    }
-                            }
-                        }) as FieldDTO[]
+                    let frame = new CircularDataFrame({
+                        append: 'head',
+                        capacity: 10_0000
                     })
+                    
+                    if (!table) {
+                        subscriber.error(t('table 不应该为空'))
+                        return
+                    }
+                    
+                    const sddb = new DDB(url, {
+                        ...options,
+                        streaming: {
+                            table,
+                            action,
+                            handler (message) {
+                                const { schema, data } = message
+                                const inner = ds.convert(data)
+                                const fields = ds.convert(schema)
+                                if (fields.length !== 0) {
+                                    if (frame.fields.length === 0) {
+                                        fields.forEach(field => {
+                                            frame.addField(field)
+                                        })
+                                    }
+                                    for (let i = 0; i < inner[0].values.length; i++) {
+                                        let row = {}
+                                        for (let j = 0; j < fields.length; j++)
+                                            row[fields[j].name] = inner[j].values[i]
+                                        frame.add(row)
+                                    }
+                                    
+                                    subscriber.next({
+                                        data: [frame],
+                                        key: query.refId,
+                                        state: LoadingState.Streaming
+                                    })
+                                }
+                            }
+                        },
+                    })
+                    
+                    ;(async () => {
+                        try {
+                            await sddb.connect()
+                            
+                            subscriber.next({
+                                data: [frame],
+                                key: query.refId,
+                                state: LoadingState.Streaming
+                            })
+                        } catch (error) {
+                            subscriber.error(error)
+                        }
+                    })()
+                    
+                    return () => {
+                        sddb.disconnect()
+                    }
                 })
-            ),
-        }
+            else
+                return new Observable<DataQueryResponse>(subscriber => {
+                    if (hide || !code.trim())
+                        subscriber.next({
+                            data: [new MutableDataFrame({ refId, fields: [] })],
+                            key: refId,
+                            state: LoadingState.Done
+                        })
+                    else
+                        (async () => {
+                            try {
+                                const tplsrv = getTemplateSrv()
+                                    ;(from as any)._isUTC = false
+                                    ;(to as any)._isUTC = false
+                                
+                                const code_ = tplsrv
+                                    .replace(
+                                        code
+                                            .replaceAll(
+                                                /\$(__)?timeFilter\b/g,
+                                                () =>
+                                                    'pair(' +
+                                                        from.format('YYYY.MM.DD HH:mm:ss.SSS') +
+                                                    ', ' +
+                                                        to.format('YYYY.MM.DD HH:mm:ss.SSS') +
+                                                    ')'
+                                            ).replaceAll(
+                                                /\$__interval\b/g,
+                                                () =>
+                                                    tplsrv.replace('$__interval', scopedVars).replace(/h$/, 'H')
+                                            ),
+                                        scopedVars,
+                                        var_formatter
+                                    )
+                                
+                                if (this.ddb.websocket && !this.ddb.connected) {
+                                    console.log(t('检测到 ddb 连接已断开，尝试自动重连到:'), this.ddb.url)
+                                    await this.ddb.connect()
+                                }
+                                
+                                const table = await this.ddb.eval<DdbObj<DdbObj<DdbVectorValue>[]>>(code_)
+                                
+                                if (table.form !== DdbForm.table)
+                                    subscriber.error(t('Query 代码的最后一条语句需要返回 table，实际返回的是: {{value}}', { value: table.toString() }))
+                                
+                                const frame = new MutableDataFrame({
+                                    refId: query.refId,
+                                    fields: this.convert(table)
+                                })
+                                
+                                subscriber.next({
+                                    data: [frame],
+                                    key: query.refId,
+                                    state: LoadingState.Done
+                                })
+                            } catch (error) {
+                                subscriber.error(error)
+                            }
+                        })()
+                })
+        })
+        
+        return merge(...streams)
     }
     
     
     override async metricFindQuery (query: string, options: any): Promise<MetricFindValue[]> {
         console.log('metricFindQuery:', { query, options })
         
+        if (this.ddb.websocket && !this.ddb.connected) {
+            console.log(t('检测到 ddb 连接已断开，尝试自动重连到:'), this.ddb.url)
+            await this.ddb.connect()
+        }
+        
         const result = await this.ddb.eval(
             getTemplateSrv()
-                .replace(query, { }, var_formatter)
+                .replace(query, {}, var_formatter)
         )
-        
+
         // 标量直接返回含有该标量的数组
         // 向量返回对应数组
         // 含有一个向量的 table 取其中的向量映射为数组
         // 其它情况报错
-        
+
         // expandable 是什么？
-        
+
         switch (result.form) {
             case DdbForm.scalar: {
-                switch (result.type) {
-                    case DdbType.string:
-                        return [{
-                            text: result.value as string,
-                            value: result.value as string | number,
-                        }]
-                        
-                    case DdbType.char: {
-                        let text = format(DdbType.char, result.value, result.le)
-                        text = text.startsWith("'") ?
-                                text.slice(1, -1)
-                            :
-                                text
-                        
-                        return [{
-                            text,
-                            value: text,
-                        }]
-                    }
-                    
-                    default: {
-                        const text = format(result.type, result.value, result.le)
-                        return [{
-                            text: text,
-                            value: text,
-                        }]
-                    }
-                }
+                const value = format(DdbType.char, result.value, result.le, { nullstr: false, quote: false })
+                return [{
+                    text: value,
+                    value
+                }]
             }
             
-            case DdbForm.vector: 
-            case DdbForm.pair: 
+            case DdbForm.vector:
+            case DdbForm.pair:
             case DdbForm.set: {
                 let values = new Array(result.rows)
-                
+
                 for (let i = 0; i < result.rows; i++) {
-                    const text = this.formati(result, i)
-                    
+                    const text = formati(result as DdbVectorObj, i, { quote: false, nullstr: false })
+
                     values[i] = {
                         text: text,
                         value: text,
                     }
                 }
-                
+
                 return values
             }
             
             case DdbForm.table: {
                 if ((result as DdbObj<DdbObj[]>).value.length === 1) {
                     let values = new Array(result.value[0].rows)
-                    
+
                     for (let i = 0; i < result.value[0].rows; i++) {
-                        const text = this.formati(result.value[0], i)
+                        const text = formati(result.value[0], i, { quote: false, nullstr: false })
                         
                         values[i] = {
                             text: text,
@@ -467,11 +366,169 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
     }
     
     
-    formati (obj: DdbObj<DdbValue>, index: number): string {
-        let str = formati(obj, index)
-        if (obj.type === DdbType.char && str.startsWith("'"))
-            str = str.slice(1, -1)
-        return str
+    convert (table: DdbObj<DdbObj<DdbVectorValue>[]>): FieldDTO[] {
+        return table.value.map(col => {
+            const { type, value, rows, name } = col
+            
+            switch (type) {
+                // --- boolean
+                case DdbType.bool:
+                    return {
+                        name,
+                        type: FieldType.boolean,
+                        values: [...value as Uint8Array].map(x => x === nulls.int8 ? null : x)
+                    }
+
+
+                // --- string
+                case DdbType.string:
+                case DdbType.symbol:
+                    return {
+                        name,
+                        type: FieldType.string,
+                        values: value
+                    }
+
+                case DdbType.symbol_extended:
+                case DdbType.char:
+                case DdbType.uuid:
+                case DdbType.int128:
+                case DdbType.ipaddr:
+                case DdbType.blob:
+                case DdbType.complex:
+                case DdbType.point:
+                    return {
+                        name,
+                        type: FieldType.string,
+                        values: (() => {
+                            let values = new Array(rows)
+
+                            for (let i = 0; i < rows; i++)
+                                values[i] = formati(col, i, { quote: false, nullstr: false })
+                            
+                            return values
+                        })()
+                    }
+
+
+                // --- time
+                case DdbType.date:
+                    return {
+                        name,
+                        type: FieldType.time,
+                        values: [...value as Int32Array].map(x => date2ms(x))
+                    }
+
+                case DdbType.month:
+                    return {
+                        name,
+                        type: FieldType.time,
+                        values: [...value as Int32Array].map(x => month2ms(x))
+                    }
+
+                case DdbType.time:
+                    return {
+                        name,
+                        type: FieldType.time,
+                        values: [...value as Int32Array].map(x => time2ms(x))
+                    }
+
+                case DdbType.minute:
+                    return {
+                        name,
+                        type: FieldType.time,
+                        values: [...value as Int32Array].map(x => minute2ms(x))
+                    }
+
+                case DdbType.second:
+                    return {
+                        name,
+                        type: FieldType.time,
+                        values: [...value as Int32Array].map(x => second2ms(x))
+                    }
+
+                case DdbType.datetime:
+                    return {
+                        name,
+                        type: FieldType.time,
+                        values: [...value as Int32Array].map(x => datetime2ms(x))
+                    }
+
+                case DdbType.timestamp:
+                    return {
+                        name,
+                        type: FieldType.time,
+                        values: [...value as BigInt64Array].map(x => timestamp2ms(x))
+                    }
+
+                case DdbType.nanotime:
+                    return {
+                        name,
+                        type: FieldType.time,
+                        values: [...value as BigInt64Array].map(x => Number(nanotime2ns(x)) / 1000000)
+                    }
+
+                case DdbType.nanotimestamp:
+                    return {
+                        name,
+                        type: FieldType.time,
+                        values: [...value as BigInt64Array].map(x => Number(nanotimestamp2ns(x)) / 1000000)
+                    }
+
+                case DdbType.datehour:
+                    return {
+                        name,
+                        type: FieldType.time,
+                        values: [...value as Int32Array].map(x => datehour2ms(x))
+                    }
+
+
+                // --- number
+                case DdbType.short:
+                    return {
+                        name,
+                        type: FieldType.number,
+                        values: [...value as Int16Array].map(x => x === nulls.int16 ? null : x)
+                    }
+
+                case DdbType.int:
+                    return {
+                        name,
+                        type: FieldType.number,
+                        values: [...value as Int32Array].map(x => x === nulls.int32 ? null : x)
+                    }
+
+                case DdbType.float:
+                    return {
+                        name,
+                        type: FieldType.number,
+                        values: [...value as Float32Array].map(x => x === nulls.float32 ? null : x)
+                    }
+
+                case DdbType.double:
+                    return {
+                        name,
+                        type: FieldType.number,
+                        values: [...value as Float64Array].map(x => x === nulls.double ? null : x)
+                    }
+
+                case DdbType.long:
+                    return {
+                        name,
+                        type: FieldType.number,
+                        values: [...(value as BigInt64Array)].map(x => x === nulls.int64 ? null : Number(x))
+                    }
+                
+                
+                // --- other
+                default:
+                    return {
+                        name,
+                        type: FieldType.other,
+                        values: value
+                    }
+            }
+        }) as FieldDTO[]
     }
 }
 
@@ -587,7 +644,9 @@ function QueryEditor (
         height = 260,
         query: {
             code,
-            refId
+            refId,
+            is_streaming,
+            streaming
         },
         onChange,
         onRunQuery,
@@ -977,7 +1036,9 @@ function QueryEditor (
                     editor.getModel().onDidChangeContent((event) => {
                         onChange({
                             refId,
-                            code: editor.getValue().replaceAll('\r\n', '\n')
+                            is_streaming,
+                            code: editor.getValue().replaceAll('\r\n', '\n'),
+                            streaming
                         })
                     })
                     
@@ -995,10 +1056,116 @@ function QueryEditor (
                     }
                 }}
             />
+            
+            <div className='editor-tip'>{t('在编辑器中按 Ctrl + S 可暂存查询并刷新结果')}</div>
         </Resizable>
     </div>
 }
 
+function StreamingEditor({
+    query: {
+        is_streaming,
+        code,
+        refId,
+        streaming
+    },
+    onChange,
+    onRunQuery,
+}: QueryEditorProps<DataSource, DdbDataQuery, DataSourceJsonData>) {
+    useEffect(() => {
+        onChange({
+            refId,
+            is_streaming,
+            code,
+            streaming: {
+                table: streaming?.table ?? '',
+            }
+        })
+    }, [])
+    
+    return <div className='streaming-editor'>
+        <div className='streaming-editor-content'>
+            <div className='streaming-editor-content-form'>
+                <InlineField tooltip={t('需要订阅的流数据表')} label={t('流数据表')} labelWidth={12}>
+                    <Input
+                        value={streaming?.table ?? ''}
+                        onChange={e => {
+                            const { value } = e.target as HTMLInputElement | HTMLTextAreaElement;
+                            onChange({
+                                refId,
+                                is_streaming,
+                                code,
+                                streaming: {
+                                    table: value ?? streaming.table,
+                                }
+                            })
+                        }} />
+                </InlineField>
+            </div>
+            <Button onClick={() => { onRunQuery() }}>{t('暂存')}</Button>
+        </div>
+    </div>
+}
+
+function QueryEditorNav(
+    {
+        query,
+        onChange,
+        onRunQuery,
+        datasource
+    }: QueryEditorProps<DataSource, DdbDataQuery, DataSourceJsonData> & { height?: number }
+) {
+    const script_type = { label: t('脚本'), value: 'script' as const }
+    const streaming_type = { label: t('流数据表'), value: 'streaming' as const }
+    
+    const [type, set_type] = useState<SelectableValue<'script' | 'streaming'>>(script_type)
+    
+    useEffect(() => {
+        set_type(query.is_streaming ? streaming_type : script_type)
+    }, [])
+    
+    return <div className='query-edtior-nav'>
+        <div className='query-editor-nav-bar'>
+            <InlineField tooltip={t('选择查询类型')} label={t('类型')} labelWidth={12}>
+                <Select
+                    placeholder='query'
+                    options={[script_type, streaming_type]}
+                    value={type}
+                    width={20}
+                    isMulti={false}
+                    onChange={v => {
+                        onChange({
+                            refId: query.refId,
+                            is_streaming: v.value === 'streaming',
+                            code: query.code,
+                            streaming: {
+                                table: query.streaming?.table,
+                            }
+                        })
+                        
+                        set_type(v)
+                    }}
+                />
+            </InlineField>
+        </div>
+        <div className={`query-editor-content ${type.value === 'script' ? '' : 'query-editor-content-none'}`}>
+            <QueryEditor
+                query={query}
+                onChange={onChange}
+                onRunQuery={onRunQuery}
+                datasource={datasource}
+            />
+        </div>
+        <div className={`query-editor-content ${type.value === 'streaming' ? '' : 'query-editor-content-none'}`}>
+            <StreamingEditor
+                onChange={onChange}
+                onRunQuery={onRunQuery}
+                query={query}
+                datasource={datasource}
+            />
+        </div>
+    </div>
+}
 
 function VariableQueryEditor ({
     query,
@@ -1024,7 +1191,7 @@ function VariableQueryEditor ({
                 {/* @ts-ignore */}
                 <QueryEditor
                     height={200}
-                    query={{ code: query, refId: 'variable' }}
+                    query={{ code: query, refId: 'variable', is_streaming: false }}
                     onChange={({ code }) => {
                         rquery.current = code
                     }}
@@ -1288,5 +1455,5 @@ function get_signature_and_params (func_name: string): {
 
 export const plugin = new DataSourcePlugin(DataSource)
     .setConfigEditor(ConfigEditor)
-    .setQueryEditor(QueryEditor)
+    .setQueryEditor(QueryEditorNav)
     .setVariableQueryEditor(VariableQueryEditor)

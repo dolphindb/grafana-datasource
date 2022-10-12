@@ -7,6 +7,10 @@
     src: local('MyFont Bold'), url('/public/plugins/dolphindb-datasource/myfontb.woff2')
     font-weight: bold
 
+.query-editor-nav-bar
+    margin-bottom: 8px
+    margin-top: 8px
+
 .query-editor
     .resizable
         > div:first-child
@@ -18,7 +22,19 @@
             
             .active-line-number.line-numbers
                 color: #444444
+                
+        .editor-tip
+            color: #888888
+
+.streaming-editor-content
+    button
+        margin-top: 8px
+        
     
+.query-editor-content-none
+    display: none
+
+
 .variable-query-editor
     .query-bottom
         margin-top: 16px

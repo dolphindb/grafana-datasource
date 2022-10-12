@@ -49,5 +49,32 @@
     },
     "已暂存查询并更新预览": {
         "en": "Query staged and preview updated"
+    },
+    "table 不应该为空": {
+        "en": "Table should not be empty"
+    },
+    "检测到 ddb 连接已断开，尝试自动重连到:": {
+        "en": "The DDB connection has been disconnected, and attempt to automatically connected to:"
+    },
+    "在编辑器中按 Ctrl + S 可暂存查询并刷新结果": {
+        "en": "Press Ctrl + S in the editor to temporarily store and refresh the result"
+    },
+    "需要订阅的流数据表": {
+        "en": "The streaming data table that needs to be subscribed"
+    },
+    "流数据表": {
+        "en": "streaming"
+    },
+    "暂存": {
+        "en": "Temporarily Store"
+    },
+    "脚本": {
+        "en": "script"
+    },
+    "选择查询类型": {
+        "en": "Select the query type"
+    },
+    "类型": {
+        "en": "Type"
     }
 }
