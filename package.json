@@ -38,7 +38,7 @@
     },
     "dependencies": {
         "dayjs": "^1.11.5",
-        "dolphindb": "file:d:/1/ddb/api/js/",
+        "dolphindb": "^2.0.801",
         "re-resizable": "^6.9.9",
         "react-object-model": "^0.0.22",
         "rxjs": "7.5.6",
