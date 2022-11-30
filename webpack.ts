@@ -5,7 +5,6 @@ import {
     default as Webpack,
     type Configuration,
     type Compiler,
-    type Watching,
     type Stats,
 } from 'webpack'
 
@@ -23,7 +22,7 @@ import sass from 'sass'
 import type { Options as SassOptions } from 'sass-loader'
 
 
-import { fcopy, fexists, fread, fwrite } from 'xshell'
+import { fcopy, fread, fwrite } from 'xshell'
 
 
 export const fpd_root = `${path.dirname(fileURLToPath(import.meta.url))}/`
@@ -49,14 +48,6 @@ export async function copy_files () {
                 .replaceAll('./demo.png', '/public/plugins/dolphindb-datasource/demo.png')
                 .replaceAll('./ddb.svg', '/public/plugins/dolphindb-datasource/ddb.svg')
         ),
-        ... (['myfont.woff2', 'myfontb.woff2'] as const).map(async fname => {
-            const fp_out = fpd_out + fname
-            
-            if (fexists(fp_out))
-                return
-            
-            return fcopy(`${fpd_root}node_modules/xshell/${fname}`, fp_out)
-        })
     ])
 }
 
@@ -219,8 +210,6 @@ const config: Configuration = {
     
     
     plugins: [
-        // new Webpack.HotModuleReplacementPlugin(),
-        
         // new Webpack.DefinePlugin({
         //     process: { env: { }, argv: [] }
         // })

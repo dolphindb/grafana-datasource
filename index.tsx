@@ -63,14 +63,10 @@ import {
 } from 'dolphindb/browser.js'
 import { keywords, constants } from 'dolphindb/language.js'
 
-// LOCAL
-// import docs from 'dolphindb/docs.zh.json'
 import docs_zh from 'dolphindb/docs.zh.json'
 import docs_en from 'dolphindb/docs.en.json'
 
-
 import { t, language } from './i18n/index.js'
-
 
 const docs = language === 'zh' ? docs_zh : docs_en
 
@@ -164,7 +160,9 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
             code ||= ''
             // cope with streaming table datasource
             const { url, ...options } = this.settings.jsonData
+            
             const ds = this
+            
             if (is_streaming)
                 return new Observable<DataQueryResponse>((subscriber: Subscriber<DataQueryResponse>) => {
                     const { streaming: { table, action } } = query
@@ -185,19 +183,18 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                             table,
                             action,
                             handler (message) {
-                                const { schema, data } = message
-                                const inner = ds.convert(data)
-                                const fields = ds.convert(schema)
+                                const { data } = message
+                                const fields = ds.convert(data)
                                 if (fields.length !== 0) {
                                     if (frame.fields.length === 0) {
                                         fields.forEach(field => {
                                             frame.addField(field)
                                         })
                                     }
-                                    for (let i = 0; i < inner[0].values.length; i++) {
+                                    for (let i = 0; i < fields[0].values.length; i++) {
                                         let row = {}
                                         for (let j = 0; j < fields.length; j++)
-                                            row[fields[j].name] = inner[j].values[i]
+                                            row[fields[j].name] = fields[j].values[i]
                                         frame.add(row)
                                     }
                                     
@@ -274,13 +271,13 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                                 if (table.form !== DdbForm.table)
                                     subscriber.error(t('Query 代码的最后一条语句需要返回 table，实际返回的是: {{value}}', { value: table.toString() }))
                                 
-                                const frame = new MutableDataFrame({
-                                    refId: query.refId,
-                                    fields: this.convert(table)
-                                })
-                                
                                 subscriber.next({
-                                    data: [frame],
+                                    data: [
+                                        new MutableDataFrame({
+                                            refId: query.refId,
+                                            fields: this.convert(table)
+                                        })
+                                    ],
                                     key: query.refId,
                                     state: LoadingState.Done
                                 })
@@ -639,7 +636,93 @@ function ConfigEditor ({
 }
 
 
-function QueryEditor (
+function QueryEditor(
+    {
+        query,
+        onChange,
+        onRunQuery,
+        datasource
+    }: QueryEditorProps<DataSource, DdbDataQuery, DataSourceJsonData> & { height?: number }
+) {
+    const script_type = { label: t('脚本'), value: 'script' as const }
+    const streaming_type = { label: t('流数据表'), value: 'streaming' as const }
+    
+    const [type, set_type] = useState<SelectableValue<'script' | 'streaming'>>(script_type)
+    
+    useEffect(() => {
+        set_type(query.is_streaming ? streaming_type : script_type)
+    }, [ ])
+    
+    const {
+        is_streaming,
+        code,
+        refId,
+        streaming
+    } = query
+    
+    return <div className='query-edtior-nav'>
+        <div className='query-editor-nav-bar'>
+            <InlineField tooltip={t('选择查询类型')} label={t('类型')} labelWidth={12}>
+                <Select
+                    placeholder='query'
+                    options={[script_type, streaming_type]}
+                    value={type}
+                    width={20}
+                    isMulti={false}
+                    onChange={v => {
+                        onChange({
+                            refId: query.refId,
+                            is_streaming: v.value === 'streaming',
+                            code: query.code,
+                            streaming: {
+                                table: query.streaming?.table,
+                            }
+                        })
+                        
+                        set_type(v)
+                    }}
+                />
+            </InlineField>
+        </div>
+        
+        <div className={`query-editor-content ${type.value === 'script' ? '' : 'query-editor-content-none'}`}>
+            <DdbCodeEditor
+                query={query}
+                onChange={onChange}
+                onRunQuery={onRunQuery}
+                datasource={datasource}
+            />
+        </div>
+        
+        <div className={`query-editor-content ${type.value === 'streaming' ? '' : 'query-editor-content-none'}`}>
+            <div className='streaming-editor'>
+                <div className='streaming-editor-content'>
+                    <div className='streaming-editor-content-form'>
+                        <InlineField tooltip={t('需要订阅的流数据表')} label={t('流数据表')} labelWidth={12}>
+                            <Input
+                                value={streaming?.table ?? ''}
+                                onChange={event => {
+                                    const { value } = event.currentTarget
+                                    onChange({
+                                        refId,
+                                        is_streaming,
+                                        code,
+                                        streaming: {
+                                            table: value || streaming?.table,
+                                        }
+                                    })
+                                }} />
+                        </InlineField>
+                    </div>
+                    <Button onClick={() => { onRunQuery() }}>{t('暂存')}</Button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+function DdbCodeEditor (
     {
         height = 260,
         query: {
@@ -650,7 +733,8 @@ function QueryEditor (
         },
         onChange,
         onRunQuery,
-    }: QueryEditorProps<DataSource, DdbDataQuery, DataSourceJsonData> & { height?: number }
+        tip = true,
+    }: QueryEditorProps<DataSource, DdbDataQuery, DataSourceJsonData> & { height?: number, tip?: boolean }
 ) {
     const { isDark } = useTheme2()
     
@@ -666,8 +750,6 @@ function QueryEditor (
             enable={{ top: false, right: false, bottom: true, left:false, topRight: false, bottomRight: false, bottomLeft: false, topLeft: false }}
         >
             <CodeEditor
-                height='100%'
-                
                 language='dolphindb'
                 
                 showLineNumbers
@@ -679,10 +761,10 @@ function QueryEditor (
                         enabled: false
                     },
                     
-                    fontFamily: 'MyFont',
+                    fontFamily: 'Menlo, \'Ubuntu Mono\', Consolas, PingFangSC, \'Noto Sans CJK SC\', \'Microsoft YaHei\'',
                     fontSize: 16,
                     insertSpaces: true,
-                    codeLensFontFamily: 'MyFont',
+                    codeLensFontFamily: 'Menlo, \'Ubuntu Mono\', Consolas, PingFangSC, \'Noto Sans CJK SC\', \'Microsoft YaHei\'',
                     folding: true,
                     largeFileOptimizations: true,
                     matchBrackets: 'always',
@@ -745,7 +827,7 @@ function QueryEditor (
                     unfoldOnClickAfterEndOfLine: true,
                     
                     inlayHints: {
-                        enabled: false,
+                        enabled: 'off',
                     },
                     
                     acceptSuggestionOnEnter: 'off',
@@ -1056,118 +1138,15 @@ function QueryEditor (
                     }
                 }}
             />
-            
-            <div className='editor-tip'>{t('在编辑器中按 Ctrl + S 可暂存查询并刷新结果')}</div>
         </Resizable>
+        
+        { tip && <div className='editor-tip'>{t('在编辑器中按 Ctrl + S 可暂存查询并刷新结果')}</div> }
     </div>
 }
 
-function StreamingEditor({
-    query: {
-        is_streaming,
-        code,
-        refId,
-        streaming
-    },
-    onChange,
-    onRunQuery,
-}: QueryEditorProps<DataSource, DdbDataQuery, DataSourceJsonData>) {
-    useEffect(() => {
-        onChange({
-            refId,
-            is_streaming,
-            code,
-            streaming: {
-                table: streaming?.table ?? '',
-            }
-        })
-    }, [])
-    
-    return <div className='streaming-editor'>
-        <div className='streaming-editor-content'>
-            <div className='streaming-editor-content-form'>
-                <InlineField tooltip={t('需要订阅的流数据表')} label={t('流数据表')} labelWidth={12}>
-                    <Input
-                        value={streaming?.table ?? ''}
-                        onChange={e => {
-                            const { value } = e.target as HTMLInputElement | HTMLTextAreaElement;
-                            onChange({
-                                refId,
-                                is_streaming,
-                                code,
-                                streaming: {
-                                    table: value ?? streaming.table,
-                                }
-                            })
-                        }} />
-                </InlineField>
-            </div>
-            <Button onClick={() => { onRunQuery() }}>{t('暂存')}</Button>
-        </div>
-    </div>
-}
 
-function QueryEditorNav(
-    {
-        query,
-        onChange,
-        onRunQuery,
-        datasource
-    }: QueryEditorProps<DataSource, DdbDataQuery, DataSourceJsonData> & { height?: number }
-) {
-    const script_type = { label: t('脚本'), value: 'script' as const }
-    const streaming_type = { label: t('流数据表'), value: 'streaming' as const }
-    
-    const [type, set_type] = useState<SelectableValue<'script' | 'streaming'>>(script_type)
-    
-    useEffect(() => {
-        set_type(query.is_streaming ? streaming_type : script_type)
-    }, [])
-    
-    return <div className='query-edtior-nav'>
-        <div className='query-editor-nav-bar'>
-            <InlineField tooltip={t('选择查询类型')} label={t('类型')} labelWidth={12}>
-                <Select
-                    placeholder='query'
-                    options={[script_type, streaming_type]}
-                    value={type}
-                    width={20}
-                    isMulti={false}
-                    onChange={v => {
-                        onChange({
-                            refId: query.refId,
-                            is_streaming: v.value === 'streaming',
-                            code: query.code,
-                            streaming: {
-                                table: query.streaming?.table,
-                            }
-                        })
-                        
-                        set_type(v)
-                    }}
-                />
-            </InlineField>
-        </div>
-        <div className={`query-editor-content ${type.value === 'script' ? '' : 'query-editor-content-none'}`}>
-            <QueryEditor
-                query={query}
-                onChange={onChange}
-                onRunQuery={onRunQuery}
-                datasource={datasource}
-            />
-        </div>
-        <div className={`query-editor-content ${type.value === 'streaming' ? '' : 'query-editor-content-none'}`}>
-            <StreamingEditor
-                onChange={onChange}
-                onRunQuery={onRunQuery}
-                query={query}
-                datasource={datasource}
-            />
-        </div>
-    </div>
-}
-
-function VariableQueryEditor ({
+/** 创建 query 变量时的编辑器 */
+function VariableEditor ({
     query,
     onChange,
 }: {
@@ -1179,7 +1158,7 @@ function VariableQueryEditor ({
     
     function save () {
         const { current: query } = rquery
-        console.log('save query:')
+        console.log(t('暂存查询并更新预览:'))
         console.log(query)
         onChange(query, query)
         rtrigger.current()
@@ -1189,21 +1168,23 @@ function VariableQueryEditor ({
         <InlineField grow label='Query' labelWidth={20} tooltip={t('通过执行脚本生成变量选项，脚本的最后一条语句应返回标量、向量、或者只含一个向量的表格')}>
             <>
                 {/* @ts-ignore */}
-                <QueryEditor
+                <DdbCodeEditor
                     height={200}
                     query={{ code: query, refId: 'variable', is_streaming: false }}
                     onChange={({ code }) => {
                         rquery.current = code
                     }}
                     onRunQuery={save}
+                    tip={false}
                 />
-                <VariableQueryEditorBottom save={save} rtrigger={rtrigger} />
+                <VariableEditorBottom save={save} rtrigger={rtrigger} />
             </>
         </InlineField>
     </div>
 }
 
-function VariableQueryEditorBottom ({
+
+function VariableEditorBottom ({
     save,
     rtrigger
 }: {
@@ -1227,8 +1208,8 @@ function VariableQueryEditorBottom ({
         <Button
             className='button'
             icon='save'
-            onClick={e => {
-                e.preventDefault()
+            onClick={event => {
+                event.preventDefault()
                 save()
             }
         }>{t('暂存查询并更新预览')}</Button>
@@ -1251,7 +1232,7 @@ const token_ends = new Set(
 )
 
 function get_func_md (keyword: string) {
-    const func_doc = docs[keyword]
+    const func_doc = docs[keyword] || docs[keyword + '!']
     
     if (!func_doc)
         return
@@ -1455,5 +1436,5 @@ function get_signature_and_params (func_name: string): {
 
 export const plugin = new DataSourcePlugin(DataSource)
     .setConfigEditor(ConfigEditor)
-    .setQueryEditor(QueryEditorNav)
-    .setVariableQueryEditor(VariableQueryEditor)
+    .setQueryEditor(QueryEditor)
+    .setVariableQueryEditor(VariableEditor)
