@@ -1,13 +1,7 @@
 import { fileURLToPath } from 'url'
 import path from 'upath'
 
-import {
-    default as Webpack,
-    type Configuration,
-    type Compiler,
-    type Stats,
-} from 'webpack'
-
+import { default as Webpack, type Compiler, type Configuration, type Stats } from 'webpack'
 
 import webpack_sources from 'webpack-sources'
 const { SourceMapSource } = webpack_sources
@@ -64,14 +58,6 @@ const config: Configuration = {
         'module.js': './index.tsx',
     },
     
-    externals: [
-        'react',
-        'react-dom',
-        '@grafana/runtime',
-        '@grafana/data',
-        '@grafana/ui',
-    ],
-    
     experiments: {
         // outputModule: true,
         topLevelAwait: true,
@@ -92,6 +78,14 @@ const config: Configuration = {
     },
     
     target: ['web', 'es2022'],
+    
+    externals: [
+        'react',
+        'react-dom',
+        '@grafana/runtime',
+        '@grafana/data',
+        '@grafana/ui',
+    ],
     
     
     resolve: {
@@ -227,7 +221,10 @@ const config: Configuration = {
         hints: false,
     },
     
-    cache: false,
+    cache: {
+        type: 'filesystem',
+        compression: 'brotli',
+    },
     
     ignoreWarnings: [
         /Failed to parse source map/
@@ -251,18 +248,27 @@ const config: Configuration = {
         
         children: true,
         
+        assets: true,
+        assetsSpace: 20,
+        
+        modules: true,
+        modulesSpace: 20,
+        
         cachedAssets: false,
         cachedModules: false,
     },
 }
+
 
 export let webpack = {
     compiler: null as Compiler,
     
     
     async build (production: boolean) {
-        if (production)
+        if (production) {
             config.mode = 'production'
+            config.cache = false
+        }
         
         this.compiler = Webpack(config)
         
@@ -309,4 +315,3 @@ export let webpack = {
         })
     }
 }
-
