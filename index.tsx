@@ -266,6 +266,9 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                                     await this.ddb.connect()
                                 }
                                 
+                                console.log(`${refId}.code:`)
+                                console.log(code_)
+                                
                                 const table = await this.ddb.eval<DdbObj<DdbObj<DdbVectorValue>[]>>(code_)
                                 
                                 if (table.form !== DdbForm.table)

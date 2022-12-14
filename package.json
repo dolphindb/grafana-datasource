@@ -41,7 +41,7 @@
         "dolphindb": "^2.0.905",
         "re-resizable": "^6.9.9",
         "react-object-model": "^0.0.24",
-        "rxjs": "7.6.0",
+        "rxjs": "7.5.7",
         "tslib": "^2.4.1",
         "upath": "^2.0.1",
         "xshell": "0.0.71"
