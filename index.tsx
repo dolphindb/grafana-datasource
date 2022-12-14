@@ -60,6 +60,7 @@ import {
     nulls,
     type DdbVectorValue,
     type DdbVectorObj,
+    type DdbTableObj,
 } from 'dolphindb/browser.js'
 import { keywords, constants } from 'dolphindb/language.js'
 
@@ -156,12 +157,9 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
         const { range: { from, to }, scopedVars } = request
         const streams = request.targets.map(query => {
             const { refId, hide, is_streaming } = query
+            
             let { code } = query
             code ||= ''
-            // cope with streaming table datasource
-            const { url, ...options } = this.settings.jsonData
-            
-            const ds = this
             
             if (is_streaming)
                 return new Observable<DataQueryResponse>((subscriber: Subscriber<DataQueryResponse>) => {
@@ -177,24 +175,27 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                         return
                     }
                     
+                    const { url, ...options } = this.settings.jsonData
+                    
                     const sddb = new DDB(url, {
                         ...options,
                         streaming: {
                             table,
                             action,
-                            handler (message) {
-                                const { data } = message
-                                const fields = ds.convert(data)
+                            handler: message => {
+                                const { data, colnames } = message
+                                const fields = this.convert(data, colnames)
+                                
                                 if (fields.length !== 0) {
-                                    if (frame.fields.length === 0) {
-                                        fields.forEach(field => {
+                                    if (frame.fields.length === 0)
+                                        for (const field of fields)
                                             frame.addField(field)
-                                        })
-                                    }
-                                    for (let i = 0; i < fields[0].values.length; i++) {
-                                        let row = {}
-                                        for (let j = 0; j < fields.length; j++)
-                                            row[fields[j].name] = fields[j].values[i]
+                                    
+                                    const nrows = fields[0].values.length
+                                    for (let i = 0; i < nrows; i++) {
+                                        let row = { }
+                                        for (const field of fields)
+                                            row[field.name] = field.values[i]
                                         frame.add(row)
                                     }
                                     
@@ -318,10 +319,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
         switch (result.form) {
             case DdbForm.scalar: {
                 const value = format(DdbType.char, result.value, result.le, { nullstr: false, quote: false })
-                return [{
-                    text: value,
-                    value
-                }]
+                return [{ text: value, value }]
             }
             
             case DdbForm.vector:
@@ -331,25 +329,20 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
 
                 for (let i = 0; i < result.rows; i++) {
                     const text = formati(result as DdbVectorObj, i, { quote: false, nullstr: false })
-
-                    values[i] = {
-                        text: text,
-                        value: text,
-                    }
+                    values[i] = { text, value: text }
                 }
-
+                
                 return values
             }
             
             case DdbForm.table: {
-                if ((result as DdbObj<DdbObj[]>).value.length === 1) {
+                if ((result as DdbTableObj).value.length === 1) {
                     let values = new Array(result.value[0].rows)
-
+                    
                     for (let i = 0; i < result.value[0].rows; i++) {
                         const text = formati(result.value[0], i, { quote: false, nullstr: false })
-                        
                         values[i] = {
-                            text: text,
+                            text,
                             value: text,
                             expandable: true
                         }
@@ -366,9 +359,9 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
     }
     
     
-    convert (table: DdbObj<DdbObj<DdbVectorValue>[]>): FieldDTO[] {
-        return table.value.map(col => {
-            const { type, value, rows, name } = col
+    convert (table: DdbObj<DdbObj<DdbVectorValue>[]>, colnames?: string[]): FieldDTO[] {
+        return table.value.map((col, icol) => {
+            const { type, value, rows, name = colnames[icol] } = col
             
             switch (type) {
                 // --- boolean
