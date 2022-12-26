@@ -43,7 +43,8 @@ export async function copy_files () {
                 .replaceAll('./ddb.svg', '/public/plugins/dolphindb-datasource/ddb.svg')
         ),
         ... (['zh', 'en']).map(async (language) => 
-            fcopy(`${fpd_root}node_modules/dolphindb/docs.${language}.json`, `${fpd_out}docs.${language}.json`, { overwrite: true }))
+            fcopy(`${fpd_root}node_modules/dolphindb/docs.${language}.json`, `${fpd_out}docs.${language}.json`, { overwrite: true })),
+        fcopy(`${fpd_root}node_modules/vscode-oniguruma/release/onig.wasm`, `${fpd_out}onig.wasm`),
     ])
 }
 

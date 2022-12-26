@@ -82,5 +82,11 @@
     },
     "暂存查询并更新预览:": {
         "en": "Stage the query and update the preview:"
+    },
+    "向下复制行": {
+        "en": "Copy row down"
+    },
+    "删除行": {
+        "en": "Delete row"
     }
 }
