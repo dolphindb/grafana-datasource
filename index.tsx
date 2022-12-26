@@ -7,6 +7,7 @@ import { Observable, merge, Subscriber } from 'rxjs'
 import { Resizable } from 're-resizable'
 
 import { delay } from 'xshell/utils.browser.js'
+import { request_json } from 'xshell/net.browser.js'
 
 import { getTemplateSrv } from '@grafana/runtime'
 import {
@@ -64,19 +65,17 @@ import {
 } from 'dolphindb/browser.js'
 import { keywords, constants } from 'dolphindb/language.js'
 
-import docs_zh from 'dolphindb/docs.zh.json'
-import docs_en from 'dolphindb/docs.en.json'
 
 import { t, language } from './i18n/index.js'
 
-const docs = language === 'zh' ? docs_zh : docs_en
 
-const constants_lower = constants.map(constant => 
-    constant.toLowerCase())
+const constants_lower = constants.map(constant => constant.toLowerCase())
 
-const funcs = Object.keys(docs)
-const funcs_lower = funcs.map(func => 
-    func.toLowerCase())
+let docs = { }
+let docs_loaded = false
+
+let funcs: string[] = [ ]
+let funcs_lower: string[] = [ ]
 
 
 console.log(t('DolphinDB Grafana 插件已加载'))
@@ -733,6 +732,24 @@ function DdbCodeEditor (
     }: QueryEditorProps<DataSource, DdbDataQuery, DataSourceJsonData> & { height?: number, tip?: boolean }
 ) {
     const { isDark } = useTheme2()
+    
+    useEffect(() => {
+        if (!docs_loaded) {
+            docs_loaded = true
+            
+            ;(async () => {
+                const fname = `docs.${ language === 'zh' ? 'zh' : 'en' }.json`
+                
+                docs = await request_json(`/public/plugins/dolphindb-datasource/${fname}`)
+                
+                funcs = Object.keys(docs)
+                funcs_lower = funcs.map(func => 
+                    func.toLowerCase())
+                
+                console.log(t('函数文档 {{fname}} 已加载', { fname }))
+            })()
+        }
+    }, [ ])
     
     return <div className='query-editor'>
         {/* <div>

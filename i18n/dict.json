@@ -76,5 +76,11 @@
     },
     "类型": {
         "en": "Type"
+    },
+    "函数文档 {{fname}} 已加载": {
+        "en": "function documentation {{fname}} loaded"
+    },
+    "暂存查询并更新预览:": {
+        "en": "Stage the query and update the preview:"
     }
 }

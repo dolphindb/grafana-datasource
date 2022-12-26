@@ -33,8 +33,8 @@ export async function copy_files () {
             'ddb.svg',
             'README.zh.md'
         ] as const).map(async fname => 
-            fcopy(fpd_root + fname, fpd_out + fname))
-        ,
+            fcopy(fpd_root + fname, fpd_out + fname)
+        ),
         fwrite(
             `${fpd_out}README.md`,
             (await fread(`${fpd_root}README.md`))
@@ -42,6 +42,8 @@ export async function copy_files () {
                 .replaceAll('./demo.png', '/public/plugins/dolphindb-datasource/demo.png')
                 .replaceAll('./ddb.svg', '/public/plugins/dolphindb-datasource/ddb.svg')
         ),
+        ... (['zh', 'en']).map(async (language) => 
+            fcopy(`${fpd_root}node_modules/dolphindb/docs.${language}.json`, `${fpd_out}docs.${language}.json`, { overwrite: true }))
     ])
 }
 
