@@ -20,7 +20,7 @@ DolphindB has developed Grafana data source plug-in (DolphindB-Datasource), allo
 
 ## Installation
 ### Method 1: Install Grafana and add plug -ins
-#### 1.1. 安装 Grafana
+#### 1.1. Install Grafana
 Go to Grafana official website: https://grafana.com/oss/grafana/ , install the latest open source version (OSS, Open-Source Software)
 
 #### 1.2. Install the dolphindb-datasource plugin
