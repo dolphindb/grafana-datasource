@@ -32,9 +32,8 @@
         "newLine": "lf",
         "lib": ["ESNext", "DOM"],
         "importHelpers": true,
-        // "watch": false
-        // "incremental": true,
-        // "tsBuildInfoFile": "./build/.tsbuildinfo",
+        "incremental": true,
+        "tsBuildInfoFile": "./node_modules/.tsbuildinfo.json",
         
         
         // --- emit
@@ -51,7 +50,7 @@
         // --- features
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "preserveSymlinks": true,
+        "preserveSymlinks": false,
         "jsx": "react",
         "removeComments": false,
         "preserveConstEnums": true,

@@ -1,0 +1,38 @@
+# 修复路径解析不一致的 warnings
+# <w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../css-loader@6.7.3_webpack@5.75.0/node_modules/css-loader/dist/cjs' in D:\2\ddb\ext\node_modules\.pnpm\loader-runner@4.3.0\node_modules\loader-runner\lib for build dependencies doesn't lead to expected result 'd:\2\ddb\ext\node_modules\.pnpm\css-loader@6.7.3_webpack@5.75.0\node_modules\css-loader\dist\cjs.js', but to 'D:\2\ddb\ext\node_modules\.pnpm\css-loader@6.7.3_webpack@5.75.0\node_modules\css-loader\dist\cjs.js' instead. Resolving dependencies are ignored for this path.
+# <w>  at resolve commonjs file ../../../../css-loader@6.7.3_webpack@5.75.0/node_modules/css-loader/dist/cjs (expected d:\2\ddb\ext\node_modules\.pnpm\css-loader@6.7.3_webpack@5.75.0\node_modules\css-loader\dist\cjs.js)
+# <w>  at file dependencies D:\2\ddb\ext\node_modules\.pnpm\loader-runner@4.3.0\node_modules\loader-runner\lib\loadLoader.js
+# <w>  at file D:\2\ddb\ext\node_modules\.pnpm\loader-runner@4.3.0\node_modules\loader-runner\lib\loadLoader.js
+# <w>  at file dependencies D:\2\ddb\ext\node_modules\.pnpm\loader-runner@4.3.0\node_modules\loader-runner\lib\LoaderRunner.js
+# <w>  at file D:\2\ddb\ext\node_modules\.pnpm\loader-runner@4.3.0\node_modules\loader-runner\lib\LoaderRunner.js
+# <w>  at file dependencies D:\2\ddb\ext\node_modules\.pnpm\webpack@5.75.0\node_modules\webpack\lib\NormalModuleFactory.js
+# <w>  at file D:\2\ddb\ext\node_modules\.pnpm\webpack@5.75.0\node_modules\webpack\lib\NormalModuleFactory.js
+# <w>  at file dependencies D:\2\ddb\ext\node_modules\.pnpm\webpack@5.75.0\node_modules\webpack\lib\Compiler.js
+# <w>  at file D:\2\ddb\ext\node_modules\.pnpm\webpack@5.75.0\node_modules\webpack\lib\Compiler.js
+# <w>  at file dependencies D:\2\ddb\ext\node_modules\.pnpm\webpack@5.75.0\node_modules\webpack\lib\webpack.js
+# <w>  at file D:\2\ddb\ext\node_modules\.pnpm\webpack@5.75.0\node_modules\webpack\lib\webpack.js
+# <w>  at file dependencies D:\2\ddb\ext\node_modules\.pnpm\webpack@5.75.0\node_modules\webpack\lib\index.js
+# <w>  at file D:\2\ddb\ext\node_modules\.pnpm\webpack@5.75.0\node_modules\webpack\lib\index.js
+# <w>  at file dependencies D:\2\ddb\ext\node_modules\.pnpm\ts-loader@9.4.2_typescript@4.9.5_webpack@5.75.0\node_modules\ts-loader\dist\utils.js
+# <w>  at file D:\2\ddb\ext\node_modules\.pnpm\ts-loader@9.4.2_typescript@4.9.5_webpack@5.75.0\node_modules\ts-loader\dist\utils.js
+# <w>  at file dependencies D:\2\ddb\ext\node_modules\.pnpm\ts-loader@9.4.2_typescript@4.9.5_webpack@5.75.0\node_modules\ts-loader\dist\index.js
+# <w>  at file D:\2\ddb\ext\node_modules\.pnpm\ts-loader@9.4.2_typescript@4.9.5_webpack@5.75.0\node_modules\ts-loader\dist\index.js
+# <w>  at file dependencies D:\2\ddb\ext\node_modules\.pnpm\ts-loader@9.4.2_typescript@4.9.5_webpack@5.75.0\node_modules\ts-loader\index.js
+# <w>  at file D:\2\ddb\ext\node_modules\.pnpm\ts-loader@9.4.2_typescript@4.9.5_webpack@5.75.0\node_modules\ts-loader\index.js
+# <w>  at resolve commonjs D:\2\ddb\ext\node_modules\.pnpm\ts-loader@9.4.2_typescript@4.9.5_webpack@5.75.0\node_modules\ts-loader\index.js
+
+diff --git a/lib/FileSystemInfo.js b/lib/FileSystemInfo.js
+index 87221acfa2583ef7690d79b25bed9f6b4dd8ff9a..4043921e2cb009402c4b57a7e93e7fe1f2f51e8f 100644
+--- a/lib/FileSystemInfo.js
++++ b/lib/FileSystemInfo.js
+@@ -1471,8 +1471,8 @@ class FileSystemInfo {
+ 					resolveResults.set(key, undefined);
+ 					resolve(context, path, resolverContext, (err, _, result) => {
+ 						if (typeof expected === "string") {
+-							if (!err && result && result.path === expected) {
+-								resolveResults.set(key, result.path);
++							if (!err && result && result.path.toLowerCase() === expected.toLowerCase()) {
++								resolveResults.set(key, expected);
+ 							} else {
+ 								invalidResolveResults.add(key);
+ 								this.logger.warn(
