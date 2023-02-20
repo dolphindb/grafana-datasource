@@ -628,7 +628,7 @@ function ConfigEditor ({
             <br />
         </>}
         
-        <InlineField tooltip={t('使用 Python Parser 来解释执行脚本, 默认 false')} label='Python' labelWidth={12}>
+        <InlineField tooltip={t('(需要 v2.10.0 以上的 DolphinDB Server) 使用 Python Parser 来解释执行脚本, 默认 false')} label='Python' labelWidth={12}>
             <InlineSwitch
                 value={options.jsonData.python}
                 onChange={e => {
@@ -642,6 +642,8 @@ function ConfigEditor ({
                 }}
             />
         </InlineField>
+        
+        <div className='version'>({t('插件构建时间:')} {BUILD_TIME})</div>
         
         {/* <div className='options'>
             { JSON.stringify(options) }

@@ -1,6 +1,8 @@
 import { fileURLToPath } from 'url'
 import path from 'upath'
 
+import dayjs from 'dayjs'
+
 import { default as Webpack, type Compiler, type Configuration, type Stats } from 'webpack'
 
 import webpack_sources from 'webpack-sources'
@@ -207,6 +209,10 @@ const config: Configuration = {
     
     
     plugins: [
+        new Webpack.DefinePlugin({
+            BUILD_TIME: dayjs().format('YYYY.MM.DD HH:mm:ss').quote()
+        })
+        
         // new Webpack.DefinePlugin({
         //     process: { env: { }, argv: [] }
         // })

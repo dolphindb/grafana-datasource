@@ -88,5 +88,11 @@
     },
     "删除行": {
         "en": "Delete row"
+    },
+    "插件构建时间:": {
+        "en": "Plugin Build Time:"
+    },
+    "(需要 v2.10.0 以上的 DolphinDB Server) 使用 Python Parser 来解释执行脚本, 默认 false": {
+        "en": "(DolphinDB Server version must be above v2.10.0) Use Python Parser to interpret and execute scripts, the default is false"
     }
 }
