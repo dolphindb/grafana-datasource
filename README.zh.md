@@ -24,7 +24,7 @@ DolphinDB 开发了 Grafana 数据源插件 (dolphindb-datasource)，让用户�
 前往 Grafana 官网: https://grafana.com/oss/grafana/ 下载并安装最新的开源版本 (OSS, Open-Source Software)
 
 #### 1.2. 安装 dolphindb-datasource 插件
-在 [releases](https://github.com/dolphindb/grafana-datasource/releases) 中下载最新版本的插件压缩包，如 `dolphindb-datasource.xxxx.xx.xx.xx.zip`
+在 [releases](https://github.com/dolphindb/grafana-datasource/releases) 中下载最新版本的插件压缩包，如 `dolphindb-datasource.v2.0.900.zip`
 
 将压缩包中的 dolphindb-datasource 文件夹解压到以下路径:
 - Windows: `<grafana 安装目录>/data/plugins/`

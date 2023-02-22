@@ -24,7 +24,7 @@ DolphindB has developed Grafana data source plug-in (DolphindB-Datasource), allo
 Go to Grafana official website: https://grafana.com/oss/grafana/ , install the latest open source version (OSS, Open-Source Software)
 
 #### 1.2. Install the dolphindb-datasource plugin
-In Releases (https://github.com/dolphindb/grafana-datasource/releases) download the latest version of the plugin zip, such as `dolphindb-datasource.2022.xx.xx.xx.zip`
+In Releases (https://github.com/dolphindb/grafana-datasource/releases) download the latest version of the plugin zip, such as `dolphindb-datasource.v2.0.900.zip`
 
 Unzip the dolphindb-datasource folder in the compressed package to the plugin directory of grafana:
 - Windows: `<grafana installation directory>/data/plugins/`
