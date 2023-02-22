@@ -40,7 +40,7 @@
     },
     "dependencies": {
         "dayjs": "^1.11.7",
-        "dolphindb": "^2.0.930",
+        "dolphindb": "^2.0.931",
         "monaco-editor": "^0.35.0",
         "re-resizable": "^6.9.9",
         "rxjs": "7.5.7",
@@ -48,7 +48,7 @@
         "upath": "^2.0.1",
         "vscode-oniguruma": "^1.7.0",
         "vscode-textmate": "^9.0.0",
-        "xshell": "^1.0.10"
+        "xshell": "^1.0.12"
     },
     "pnpm": {
         "patchedDependencies": {
