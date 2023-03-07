@@ -109,12 +109,11 @@ http://localhost:3000/admin/plugins?filterBy=all&filterByType=all&q=dolphindb
 ### 3. 新建 Panel，通过编写查询脚本或订阅流数据表，可视化 DolphinDB 时序数据
 打开或新建 Dashboard，编辑或新建 Panel，在 Panel 的 Data source 属性中选择上一步添加的数据源  
 #### 3.1. 编写脚本执行查询，可视化返回的时序表格
-将 query 类型设置为 `脚本`  
-编写查询脚本，代码的最后一条语句需要返回 table  
-编写完成后按 `Ctrl + S` 保存，或者点击页面中的刷新按钮 (Refresh dashboard)，可以将 Query 发到 DolphinDB 数据库运行并展示出图表  
-代码编辑框的高度通过拖动底部边框进行调整  
-
-点击右上角的保存 `Save` 按钮，保存 panel 配置
+1. 将 query 类型设置为 `脚本`  
+2. 编写查询脚本，代码的最后一条语句需要返回 table  
+3. 编写完成后按 `Ctrl + S` 保存，或者点击页面中的刷新按钮 (Refresh dashboard)，可以将 Query 发到 DolphinDB 数据库运行并展示出图表  
+4. 代码编辑框的高度通过拖动底部边框进行调整  
+5. 点击右上角的保存 `Save` 按钮，保存 panel 配置
 
 dolphindb-datasource 插件支持变量，比如:
 - `$__timeFilter` 变量: 值为面板上方的时间轴区间，比如当前的时间轴区间是 `2022-02-15 00:00:00 - 2022.02.17 00:00:00` ，那么代码中的 `$__timeFilter` 会被替换为 `pair(2022.02.15 00:00:00.000, 2022.02.17 00:00:00.000)`
@@ -128,12 +127,11 @@ dolphindb-datasource 插件支持变量，比如:
 
 #### 3.2. 订阅并实时可视化 DolphinDB 中的流数据表
 要求：DolphinDB server 版本不低于 2.00.9 或 1.30.21  
-将 query 类型设置为 `流数据表`  
-填写要订阅的流数据表表名  
-点击暂存按钮  
-将时间范围改成 `Last 5 minutes` (需要包含当前时间，如 Last x hour/minutes/seconds，而不是历史时间区间，否则看不到数据)
-
-点击右上角的保存 `Save` 按钮，保存 panel 配置  
+1. 将 query 类型设置为 `流数据表`  
+2. 填写要订阅的流数据表表名  
+3. 点击暂存按钮  
+4. 将时间范围改成 `Last 5 minutes` (需要包含当前时间，如 Last x hour/minutes/seconds，而不是历史时间区间，否则看不到数据)
+5. 点击右上角的保存 `Save` 按钮，保存 panel 配置  
 
 ### 4. 参考文档学习 Grafana 使用
 https://grafana.com/docs/grafana/latest/
@@ -142,7 +140,7 @@ https://grafana.com/docs/grafana/latest/
 Q: 如何设置 dashboard 自动刷新间隔？  
 A:   
 对于脚本类型，打开 dashboard, 在右上角刷新按钮右侧点击下拉框选择自动刷新间隔  
-对于流数据表类型，数据是实时的，无需设置  
+对于流数据表类型，数据是实时的，无需设置。没有新的数据更新发生时，连接会关闭；如有新的数据更新发生，连接会重新建立。
 
 如果需要自定义刷新间隔，可以打开 `dashboard settings > Time options > Auto refresh`, 输入自定义的间隔
 如果需要定义比 5s 更小的刷新间隔，比如 1s，需要按下面的方法操作:  

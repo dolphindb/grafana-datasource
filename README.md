@@ -109,12 +109,11 @@ Note: The new version of the plugin uses the WebSocket protocol to communicate w
 ### 3. Create a new Panel, writing query scripts or subscribing streaming data tables to visualize DolphinDB's time-series data
 Open or create new Dashboard, edit or create a new Panel, select the data source added to the Panel's data source attribute
 #### 3.1. Write the script to execute the query to visulize the time-series table returned
-Set the query type to `script`  
-Write a query script, the last statement of the code needs to return a table  
-After writing, press `Ctrl + S` to save, or click the refresh button on the page (Refresh dashboard), you can send the Query to the DolphinDB database to run and display the chart  
-The height of the code editing box can be adjusted by dragging the bottom  
-
-Click to save the `Save` button in the upper right corner to save the Panel configuration
+1. Set the query type to `script`  
+2. Write a query script, the last statement of the code needs to return a table  
+3. After writing, press `Ctrl + S` to save, or click the refresh button on the page (Refresh dashboard), you can send the Query to the DolphinDB database to run and display the chart  
+4. The height of the code editing box can be adjusted by dragging the bottom  
+5. Click to save the `Save` button in the upper right corner to save the Panel configuration
 
 The dolphindb-datasource plugin supports variables, such as:
 - `$__timeFilter` variable: the value is the time axis interval above the panel. For example, the current time axis interval is `2022-02-15 00:00:00 - 2022.02.17 00:00:00` , then the ` $__timeFilter` will be replaced with `pair(2022.02.15 00:00:00.000, 2022.02.17 00:00:00.000)`
@@ -128,12 +127,11 @@ To view the message output by `print('xxx')` in the code, or the code after vari
 
 #### 3.2. Subscribe to and visualize the streaming data table in DolphinDB
 Requirements: DolphinDB Server version is not less than 2.00.9 or 1.30.21  
-Set the query type to `streaming`  
-Fill in the streaming data table name to be subscribed to  
-Click the `Temporarily Store` button  
-Change the time range to `Last 5 Minutes` (need to include the current time, such as Last x Hour/Minutes/Seconds instead of the historical time interval, otherwise you will not see the data)
-
-Click to save the `Save` button in the upper right corner to save the Panel configuration
+1. Set the query type to `streaming`  
+2. Fill in the streaming data table name to be subscribed to  
+3. Click the `Temporarily Store` button  
+4. Change the time range to `Last 5 Minutes` (need to include the current time, such as Last x Hour/Minutes/Seconds instead of the historical time interval, otherwise you will not see the data)
+5. Click to save the `Save` button in the upper right corner to save the Panel configuration
 
 ### 4. Learn how to use Grafana by referring to the documentation
 https://grafana.com/docs/grafana/latest/
@@ -143,7 +141,7 @@ https://grafana.com/docs/grafana/latest/
 Q: How to set the automatic refresh interval of the dashboard?
 A:
 For the type of script, open Dashboard, and refresh the right side to the right side of the right corner to click the drop -down box to select the automatic refresh interval  
-For stream data table types, the data is real-time, no settings are required. 
+For stream data table types, the data is real-time, no settings are required. When no new data is updated, the connection will be closed; otherwise, the connection will be re-established.
 
 If you need to customize the refresh interval, you can open `dashboard settings > Time options > Auto refresh`, enter a custom interval  
 
