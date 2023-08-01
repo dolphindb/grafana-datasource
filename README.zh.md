@@ -169,7 +169,7 @@ npm run build
 # 2. 开发插件
 npm run dev
 # 将 out 文件夹软链接到 Grafana plugins 目录下
-flink('d:/grafana-datasource/out/', 'e:/sdk/grafana/data/plugins/dolphindb-datasource/')
+flink('D:/grafana-datasource/out/', 'E:/sdk/grafana/data/plugins/dolphindb-datasource/')
 
 # 重启 Grafana
 ```
