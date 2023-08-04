@@ -38,10 +38,16 @@ If the plugins level directory does not exist, you can manually create this fold
 Read the following documents to open and edit configuration files
 https://grafana.com/docs/grafana/latest/administration/configuration/#configuration-file-location
 
-Uncomment `allow_loading_unsigned_plugins` in `[plugins]` section and change to `dolphindb-datasource`
-````ini
+Uncomment `allow_loading_unsigned_plugins` under the `[plugins]` section and configure it as `dolphindb-datasource`, i.e. put the following
+```ini
+# Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
+;allow_loading_unsigned_plugins =
+```
+changed to
+```ini
+# Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
 allow_loading_unsigned_plugins = dolphindb-datasource
-````
+```
 
 Note: Grafana needs to be restarted every time a configuration item is modified
 

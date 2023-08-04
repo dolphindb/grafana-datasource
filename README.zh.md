@@ -36,8 +36,14 @@ DolphinDB 开发了 Grafana 数据源插件 (dolphindb-datasource)，让用户�
 阅读 https://grafana.com/docs/grafana/latest/administration/configuration/#configuration-file-location  
 打开并编辑配置文件： 
 
-在 `[plugins]` 部分下面取消注释 `allow_loading_unsigned_plugins`，并配置为 `dolphindb-datasource`
+在 `[plugins]` 部分下面取消注释 `allow_loading_unsigned_plugins`，并配置为 `dolphindb-datasource`，即把下面的
 ```ini
+# Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
+;allow_loading_unsigned_plugins =
+```
+改为
+```ini
+# Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
 allow_loading_unsigned_plugins = dolphindb-datasource
 ```
 
