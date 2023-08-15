@@ -1,5 +1,4 @@
 import { fileURLToPath } from 'url'
-import path from 'upath'
 
 import dayjs from 'dayjs'
 
@@ -21,7 +20,7 @@ import type { Options as SassOptions } from 'sass-loader'
 import { fcopy, fread, fwrite } from 'xshell'
 
 
-export const fpd_root = `${path.dirname(fileURLToPath(import.meta.url))}/`
+export const fpd_root = fileURLToPath(import.meta.url).fdir
 
 export const fpd_out = `${fpd_root}out/`
 
