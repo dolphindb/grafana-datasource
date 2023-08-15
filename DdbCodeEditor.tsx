@@ -81,7 +81,7 @@ export function DdbCodeEditor (
         <Resizable
             className='resizable'
             defaultSize={{ height, width: 'auto' }}
-            enable={{ top: false, right: false, bottom: true, left:false, topRight: false, bottomRight: false, bottomLeft: false, topLeft: false }}
+            enable={{ top: false, right: false, bottom: true, left: false, topRight: false, bottomRight: false, bottomLeft: false, topLeft: false }}
         >
             <CodeEditor
                 language='dolphindb'
@@ -434,7 +434,7 @@ export function DdbCodeEditor (
                         
                     editor.setValue(code || '')
                     
-                    editor.getModel().onDidChangeContent((event) => {
+                    editor.getModel().onDidChangeContent(event => {
                         onChange({
                             refId,
                             is_streaming,
@@ -539,6 +539,7 @@ let registry = new Registry({
     
     async loadGrammar (scopeName: string): Promise<IRawGrammar | null> {
         const scopeNameInfo = grammars[scopeName]
+        // eslint-disable-next-line
         if (scopeNameInfo == null) 
             return null
         
@@ -589,8 +590,9 @@ class TokensProviderCache {
         }
     }
     
-    getGrammar (scopeName: string, encodedLanguageId: number): Promise<IGrammar> {
+    async getGrammar (scopeName: string, encodedLanguageId: number): Promise<IGrammar> {
         const grammar = this.scopeNameToGrammar.get(scopeName)
+        // eslint-disable-next-line
         if (grammar != null) 
             return grammar
         
@@ -635,6 +637,7 @@ function create_style_element_for_colors_css (): HTMLStyleElement {
      else {
         // Though if we cannot find it, just append to <head>.
         let { head } = document
+        // eslint-disable-next-line
         if (head == null) 
             head = document.getElementsByTagName('head')[0]
         
@@ -731,7 +734,7 @@ function find_func_start (
     
     let stack_depth = 0
     let param_search_pos = -1
-    for (let i = text.length; i >= 0; i--) {
+    for (let i = text.length;  i >= 0;  i--) {
         let char = text[i]
         // 遇到右括号，入栈，增加一层括号语境深度
         if (char === ')') {
@@ -759,7 +762,7 @@ function find_func_start (
     // 往前找函数名
     let func_name_end = -1
     let func_name_start = 0
-    for (let i = param_search_pos; i >= 0; i--) {
+    for (let i = param_search_pos;  i >= 0;  i--) {
         let char = text[i]
         
         // 空字符跳过
@@ -806,7 +809,7 @@ function find_active_param_index (
     })
     
     let index = 0
-    let stack = []
+    let stack = [ ]
     
     // 分隔符，此处为逗号
     const seperator = ','
@@ -814,7 +817,7 @@ function find_active_param_index (
     let ncommas = 0
     
     // 搜索
-    for (let i = start; i < text.length; i++) {
+    for (let i = start;  i < text.length;  i++) {
         const char = text[i]
         
         // 空字符跳过

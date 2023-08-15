@@ -137,7 +137,7 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                                             frame.addField(field)
                                     
                                     const nrows = fields[0].values.length
-                                    for (let i = 0; i < nrows; i++) {
+                                    for (let i = 0;  i < nrows;  i++) {
                                         let row = { }
                                         for (const field of fields)
                                             row[field.name] = field.values[i]
@@ -176,7 +176,7 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                 return new Observable<DataQueryResponse>(subscriber => {
                     if (hide || !code.trim())
                         subscriber.next({
-                            data: [new MutableDataFrame({ refId, fields: [] })],
+                            data: [new MutableDataFrame({ refId, fields: [ ] })],
                             key: refId,
                             state: LoadingState.Done
                         })
@@ -245,16 +245,16 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
         
         const result = await this.ddb.eval(
             getTemplateSrv()
-                .replace(query, {}, var_formatter)
+                .replace(query, { }, var_formatter)
         )
-
+        
         // 标量直接返回含有该标量的数组
         // 向量返回对应数组
         // 含有一个向量的 table 取其中的向量映射为数组
         // 其它情况报错
-
+        
         // expandable 是什么？
-
+        
         switch (result.form) {
             case DdbForm.scalar: {
                 const value = format(DdbType.char, result.value, result.le, { nullstr: false, quote: false })
@@ -265,8 +265,8 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
             case DdbForm.pair:
             case DdbForm.set: {
                 let values = new Array(result.rows)
-
-                for (let i = 0; i < result.rows; i++) {
+                
+                for (let i = 0;  i < result.rows;  i++) {
                     const text = formati(result as DdbVectorObj, i, { quote: false, nullstr: false })
                     values[i] = { text, value: text }
                 }
@@ -278,7 +278,7 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                 if ((result as DdbTableObj).value.length === 1) {
                     let values = new Array(result.value[0].rows)
                     
-                    for (let i = 0; i < result.value[0].rows; i++) {
+                    for (let i = 0;  i < result.value[0].rows;  i++) {
                         const text = formati(result.value[0], i, { quote: false, nullstr: false })
                         values[i] = {
                             text,
@@ -310,8 +310,8 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                         type: FieldType.boolean,
                         values: [...value as Uint8Array].map(x => x === nulls.int8 ? null : x)
                     }
-
-
+                    
+                    
                 // --- string
                 case DdbType.string:
                 case DdbType.symbol:
@@ -320,7 +320,7 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                         type: FieldType.string,
                         values: value
                     }
-
+                    
                 case DdbType.symbol_extended:
                 case DdbType.char:
                 case DdbType.uuid:
@@ -334,15 +334,15 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                         type: FieldType.string,
                         values: (() => {
                             let values = new Array(rows)
-
-                            for (let i = 0; i < rows; i++)
+                            
+                            for (let i = 0;  i < rows;  i++)
                                 values[i] = formati(col, i, { quote: false, nullstr: false })
                             
                             return values
                         })()
                     }
-
-
+                    
+                    
                 // --- time
                 case DdbType.date:
                     return {
@@ -350,71 +350,71 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                         type: FieldType.time,
                         values: [...value as Int32Array].map(x => date2ms(x))
                     }
-
+                    
                 case DdbType.month:
                     return {
                         name,
                         type: FieldType.time,
                         values: [...value as Int32Array].map(x => month2ms(x))
                     }
-
+                    
                 case DdbType.time:
                     return {
                         name,
                         type: FieldType.time,
                         values: [...value as Int32Array].map(x => time2ms(x))
                     }
-
+                    
                 case DdbType.minute:
                     return {
                         name,
                         type: FieldType.time,
                         values: [...value as Int32Array].map(x => minute2ms(x))
                     }
-
+                    
                 case DdbType.second:
                     return {
                         name,
                         type: FieldType.time,
                         values: [...value as Int32Array].map(x => second2ms(x))
                     }
-
+                    
                 case DdbType.datetime:
                     return {
                         name,
                         type: FieldType.time,
                         values: [...value as Int32Array].map(x => datetime2ms(x))
                     }
-
+                    
                 case DdbType.timestamp:
                     return {
                         name,
                         type: FieldType.time,
                         values: [...value as BigInt64Array].map(x => timestamp2ms(x))
                     }
-
+                    
                 case DdbType.nanotime:
                     return {
                         name,
                         type: FieldType.time,
                         values: [...value as BigInt64Array].map(x => Number(nanotime2ns(x)) / 1000000)
                     }
-
+                    
                 case DdbType.nanotimestamp:
                     return {
                         name,
                         type: FieldType.time,
                         values: [...value as BigInt64Array].map(x => Number(nanotimestamp2ns(x)) / 1000000)
                     }
-
+                    
                 case DdbType.datehour:
                     return {
                         name,
                         type: FieldType.time,
                         values: [...value as Int32Array].map(x => datehour2ms(x))
                     }
-
-
+                    
+                    
                 // --- number
                 case DdbType.short:
                     return {
@@ -422,28 +422,28 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                         type: FieldType.number,
                         values: [...value as Int16Array].map(x => x === nulls.int16 ? null : x)
                     }
-
+                    
                 case DdbType.int:
                     return {
                         name,
                         type: FieldType.number,
                         values: [...value as Int32Array].map(x => x === nulls.int32 ? null : x)
                     }
-
+                    
                 case DdbType.float:
                     return {
                         name,
                         type: FieldType.number,
                         values: [...value as Float32Array].map(x => x === nulls.float32 ? null : x)
                     }
-
+                    
                 case DdbType.double:
                     return {
                         name,
                         type: FieldType.number,
                         values: [...value as Float64Array].map(x => x === nulls.double ? null : x)
                     }
-
+                    
                 case DdbType.long:
                     return {
                         name,
@@ -592,7 +592,7 @@ function ConfigEditor ({
 }
 
 
-function QueryEditor(
+function QueryEditor (
     {
         query,
         onChange,
