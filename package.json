@@ -19,6 +19,7 @@
     "devDependencies": {
         "@grafana/data": "^10.0.3",
         "@grafana/runtime": "^10.0.3",
+        "@grafana/schema": "^10.0.3",
         "@grafana/ui": "^10.0.3",
         "@svgr/webpack": "^8.1.0",
         "@types/node": "^20.5.0",

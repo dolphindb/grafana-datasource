@@ -35,7 +35,6 @@
         "incremental": true,
         "tsBuildInfoFile": "./node_modules/.tsbuildinfo.json",
         
-        
         // --- emit
         "declaration": false,
         "emitDeclarationOnly": false,
@@ -51,7 +50,7 @@
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "preserveSymlinks": false,
-        "jsx": "react",
+        "jsx": "react-jsx",
         "removeComments": false,
         "preserveConstEnums": true,
         "forceConsistentCasingInFileNames": true,
@@ -67,18 +66,6 @@
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "skipLibCheck": true,
-    },
-    
-    // --- watch options
-    "watchOptions": {
-        "excludeDirectories": [
-            "**/node_modules",
-        ],
-        
-        "watchFile": "useFsEvents",
-        "watchDirectory": "useFsEvents",
-        
-        "fallbackPolling": "dynamicPriority"
     }
 }
 

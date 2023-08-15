@@ -40,6 +40,9 @@ devDependencies:
   '@grafana/runtime':
     specifier: ^10.0.3
     version: 10.0.3(@types/react@18.2.20)(react-dom@18.2.0)(react@18.2.0)
+  '@grafana/schema':
+    specifier: ^10.0.3
+    version: 10.0.3
   '@grafana/ui':
     specifier: ^10.0.3
     version: 10.0.3(@types/react@18.2.20)(react-dom@18.2.0)(react@18.2.0)
