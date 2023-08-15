@@ -78,6 +78,7 @@ import {
     type DdbVectorValue,
     type DdbVectorObj,
     type DdbTableObj,
+    type DdbOptions,
 } from 'dolphindb/browser.js'
 import { keywords, constants, tm_language } from 'dolphindb/language.js'
 
@@ -133,6 +134,10 @@ function var_formatter (value: string | string[], variable: any, default_formatt
 class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
     settings: DataSourceInstanceSettings<DataSourceConfig>
     
+    url: string
+    
+    options: DdbOptions
+    
     ddb: DDB
     
     
@@ -145,7 +150,23 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
         
         const { url, ...options } = settings.jsonData
         
+        this.url = url
+        this.options = options
         this.ddb = new DDB(url, options)
+    }
+    
+    
+    /** 调用后会确保和数据库的连接是正常的 (this.connected === true)，否则自动尝试建立新的连接  
+        这个方法是幂等的，首次调用建立实际的 WebSocket 连接到 URL 对应的 DolphinDB，然后执行自动登录，  
+        后续调用检查上面的条件 */
+    async connect () {
+        const { resource: websocket } = this.ddb.lwebsocket
+        if (websocket && (websocket.readyState === WebSocket.CLOSING || websocket.readyState === WebSocket.CLOSED)) {
+            console.log(t('检测到 ddb 连接已断开，尝试建立新的连接到:'), this.ddb.url)
+            this.ddb = new DDB(this.url, this.options)
+        }
+        
+        await this.ddb.connect()
     }
     
     
@@ -153,7 +174,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
         console.log('test datasource')
         
         try {
-            await this.ddb.connect()
+            await this.connect()
             return {
                 status: 'success',
                 message: t('已连接到数据库')
@@ -280,10 +301,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                                         var_formatter
                                     )
                                 
-                                if (this.ddb.websocket && !this.ddb.connected) {
-                                    console.log(t('检测到 ddb 连接已断开，尝试自动重连到:'), this.ddb.url)
-                                    await this.ddb.connect()
-                                }
+                                await this.connect()
                                 
                                 console.log(`${refId}.code:`)
                                 console.log(code_)
@@ -317,10 +335,7 @@ class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
     override async metricFindQuery (query: string, options: any): Promise<MetricFindValue[]> {
         console.log('metricFindQuery:', { query, options })
         
-        if (this.ddb.websocket && !this.ddb.connected) {
-            console.log(t('检测到 ddb 连接已断开，尝试自动重连到:'), this.ddb.url)
-            await this.ddb.connect()
-        }
+        await this.connect()
         
         const result = await this.ddb.eval(
             getTemplateSrv()
