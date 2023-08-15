@@ -43,7 +43,7 @@
         "dolphindb": "^2.0.1013",
         "monaco-editor": "^0.41.0",
         "re-resizable": "^6.9.11",
-        "rxjs": "7.8.1",
+        "rxjs": "7.8.0",
         "tslib": "^2.6.1",
         "vscode-oniguruma": "^1.7.0",
         "vscode-textmate": "^9.0.0",
