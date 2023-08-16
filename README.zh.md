@@ -161,21 +161,49 @@ min_refresh_interval = 1s
 
 ## 构建及开发方法
 ```shell
+# 安装最新版的 nodejs
+# https://nodejs.org/en/download/current/
+
+# 安装 pnpm 包管理器
+corepack enable
+corepack prepare pnpm@latest --activate
+
 git clone https://github.com/dolphindb/grafana-datasource.git
 
 cd grafana-datasource
 
-npm i --force
+# 安装项目依赖
+pnpm install
 
-# 1. 构建插件
+# 将 .vscode/settings.template.json 复制为 .vscode/settings.json
+cp .vscode/settings.template.json .vscode/settings.json
+
+# 参考 package.json 中的 scripts
+
+# 链接项目构建后的输出文件夹到 grafana 的插件目录下 (clone 项目后链接一次即可)
+# 传入的参数为安装的 grafana 的插件目录
+# - Windows: `<grafana 安装目录>/data/plugins/`
+# - Linux: `/var/lib/grafana/plugins/`
+pnpm run link E:/sdk/grafana/data/plugins/
+
+# 开发
+pnpm run dev
+
+# 重启 grafana
+
+# 扫描词条
+pnpm run scan
+# 手动补全未翻译词条
+# 再次运行扫描以更新词典文件 dict.json
+pnpm run scan
+
+# lint
+pnpm run lint
+
+# lint fix
+pnpm run fix
+
+# 构建
 npm run build
 # 完成后产物在 out 文件夹中。将 out 重命名为 dolphindb-datasource 后压缩为 .zip 即可
-
-
-# 2. 开发插件
-npm run dev
-# 将 out 文件夹软链接到 Grafana plugins 目录下
-flink('D:/grafana-datasource/out/', 'E:/sdk/grafana/data/plugins/dolphindb-datasource/')
-
-# 重启 Grafana
 ```

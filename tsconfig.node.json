@@ -4,6 +4,7 @@
     "include": [
         "./dev.ts",
         "./build.ts",
+        "./link.ts"
     ],
     
     "exclude": [

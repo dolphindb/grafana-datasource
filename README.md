@@ -163,21 +163,49 @@ Restart grafana after modification
 
 ## Build and development
 ```shell
+# Install the latest version of nodejs
+# https://nodejs.org/en/download/current/
+
+# Install the pnpm package manager
+corepack enable
+corepack prepare pnpm@latest --activate
+
 git clone https://github.com/dolphindb/grafana-datasource.git
 
 cd grafana-datasource
 
-npm i --force
+# Install project dependencies
+pnpm install
 
-# 1. Build the plugin
-npm run build
-# The finished product is in the out folder. Rename out to dolphindb-datasource and compress it to .zip
+# Copy .vscode/settings.template.json to .vscode/settings.json
+cp .vscode/settings.template.json .vscode/settings.json
 
+# Refer to scripts in package.json
 
-# 2. Develop plugins
-npm run dev
-# Soft link the out folder to the grafana plugins directory
-flink('d:/grafana-datasource/out/', 'e:/sdk/grafana/data/plugins/dolphindb-datasource/')
+# Link the output folder after the project is built to the plug-in directory of grafana (just link it once after cloning the project)
+# The parameter passed in is the plugin directory of the installed grafana
+# - Windows: `<grafana installation directory>/data/plugins/`
+# - Linux: `/var/lib/grafana/plugins/`
+pnpm run link E:/sdk/grafana/data/plugins/
+
+# development
+pnpm run dev
 
 # restart grafana
-````
+
+# scan entries
+pnpm run scan
+# Manually complete untranslated entries
+# Run the scan again to update the dictionary file dict.json
+pnpm run scan
+
+#lint
+pnpm run lint
+
+#lint fix
+pnpm run fix
+
+# Construct
+npm run build
+# After completion, the product is in the out folder. Rename out to dolphindb-datasource and compress it to .zip
+```
