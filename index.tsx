@@ -479,6 +479,7 @@ interface DataSourceConfig extends DataSourceJsonData {
     username?: string
     password?: string
     python?: boolean
+    verbose?: boolean
 }
 
 export interface DdbDataQuery extends DataQuery {
@@ -502,6 +503,17 @@ function ConfigEditor ({
     jsonData.username ??= 'admin'
     jsonData.password ??= '123456'
     jsonData.python ??= false
+    jsonData.verbose ??= false
+    
+    const handleOptionChange = (option: keyof DataSourceConfig, value: string | boolean) => {
+        onOptionsChange({
+            ...options,
+            jsonData: {
+                ...options.jsonData,
+                [option]: value
+            }
+        })
+    }
     
     
     return <div className='gf-form-group'>
@@ -512,15 +524,7 @@ function ConfigEditor ({
         >
             <Input
                 value={options.jsonData.url}
-                onChange={e => {
-                    onOptionsChange({
-                        ...options,
-                        jsonData: {
-                            ...options.jsonData,
-                            url: e.currentTarget.value
-                        }
-                    })
-                }}
+                onChange={e => handleOptionChange('url', e.currentTarget.value)}
             />
         </InlineField>
         <br/>
@@ -528,15 +532,7 @@ function ConfigEditor ({
         <InlineField tooltip={t('是否在建立连接后自动登录，默认 true')} label={t('自动登录')} labelWidth={12}>
             <InlineSwitch
                 value={options.jsonData.autologin}
-                onChange={e => {
-                    onOptionsChange({
-                        ...options,
-                        jsonData: {
-                            ...options.jsonData,
-                            autologin: e.currentTarget.checked
-                        }
-                    })
-                }}
+                onChange={e =>  handleOptionChange('autologin', e.currentTarget.checked)}
             />
         </InlineField>
         <br/>
@@ -545,15 +541,7 @@ function ConfigEditor ({
             <InlineField tooltip={t('DolphinDB 登录用户名')} label={t('用户名')} labelWidth={12}>
                 <Input
                     value={options.jsonData.username}
-                    onChange={e => {
-                        onOptionsChange({
-                            ...options,
-                            jsonData: {
-                                ...options.jsonData,
-                                username: e.currentTarget.value
-                            }
-                        })
-                    }}
+                    onChange={e => handleOptionChange('username', e.currentTarget.value)}
                 />
             </InlineField>
             <br />
@@ -564,15 +552,7 @@ function ConfigEditor ({
                 <Input
                     type='password'
                     value={options.jsonData.password}
-                    onChange={e => {
-                        onOptionsChange({
-                            ...options,
-                            jsonData: {
-                                ...options.jsonData,
-                                password: e.currentTarget.value
-                            }
-                        })
-                    }}
+                    onChange={e => handleOptionChange('password', e.currentTarget.value)}
                 />
             </InlineField>
             <br />
@@ -581,15 +561,15 @@ function ConfigEditor ({
         <InlineField tooltip={t('(需要 v2.10.0 以上的 DolphinDB Server) 使用 Python Parser 来解释执行脚本, 默认 false')} label='Python' labelWidth={12}>
             <InlineSwitch
                 value={options.jsonData.python}
-                onChange={e => {
-                    onOptionsChange({
-                        ...options,
-                        jsonData: {
-                            ...options.jsonData,
-                            python: e.currentTarget.checked
-                        }
-                    })
-                }}
+                onChange={e => handleOptionChange('python', e.currentTarget.checked)}
+            />
+        </InlineField>
+        <br />
+        
+        <InlineField tooltip={t('(打印调试信息, 默认 false')} label='Verbose' labelWidth={12}>
+            <InlineSwitch
+                value={options.jsonData.verbose}
+                onChange={e => handleOptionChange('verbose', e.currentTarget.checked)}
             />
         </InlineField>
         

@@ -3,6 +3,8 @@ node_modules/
 /out/
 /fonts
 
+.DS_Store
+
 /*.js
 *.map
 *.d.ts
