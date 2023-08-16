@@ -15,7 +15,7 @@ import { DataSourcePlugin, DataSourceApi, MutableDataFrame, FieldType, LoadingSt
 import { InlineField, Input, InlineSwitch, Button, Icon, Select } from '@grafana/ui'
 
 
-import { delay } from 'xshell/utils.browser.js'
+import { defer, delay } from 'xshell/utils.browser.js'
 
 
 import {
@@ -98,16 +98,21 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
         }
     }
     
-    override query (request: DataQueryRequest<DdbDataQuery>): Observable<DataQueryResponse> {
+    
+    override query (request: DataQueryRequest<DdbDataQuery>) {
         const { range: { from, to }, scopedVars } = request
-        const streams = request.targets.map(query => {
+        
+        // 下面的 promises 是为了保证脚本类型下，所有 query 的数据都准备好后，
+        // 再一起通过 subscriber.next 给 grafana，以解决不同时间添加数据导致图像线条闪烁的问题
+        let pevals_ready = defer<void>()
+        let pevals: Promise<DdbTableObj>[] = [ ]
+        
+        return merge(... request.targets.map(query => {
             const { refId, hide, is_streaming } = query
+            const code = query.code || ''
             
-            let { code } = query
-            code ||= ''
-            
-            if (is_streaming)
-                return new Observable<DataQueryResponse>((subscriber: Subscriber<DataQueryResponse>) => {
+            return new Observable<DataQueryResponse>(subscriber => {
+                if (is_streaming) {
                     const { streaming: { table, action } } = query
                     
                     let frame = new CircularDataFrame({
@@ -160,7 +165,7 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                             
                             subscriber.next({
                                 data: [frame],
-                                key: query.refId,
+                                key: refId,
                                 state: LoadingState.Streaming
                             })
                         } catch (error) {
@@ -171,9 +176,7 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                     return () => {
                         sddb.disconnect()
                     }
-                })
-            else
-                return new Observable<DataQueryResponse>(subscriber => {
+                } else
                     if (hide || !code.trim())
                         subscriber.next({
                             data: [new MutableDataFrame({ refId, fields: [ ] })],
@@ -212,29 +215,36 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                                 console.log(`${refId}.code:`)
                                 console.log(code_)
                                 
-                                const table = await this.ddb.eval<DdbObj<DdbObj<DdbVectorValue>[]>>(code_)
+                                let peval = this.ddb.eval<DdbTableObj>(code_)
+                                
+                                pevals.push(peval)
+                                if (pevals.length === request.targets.length)
+                                    pevals_ready.resolve()
+                                
+                                const table = await peval
                                 
                                 if (table.form !== DdbForm.table)
                                     subscriber.error(t('Query 代码的最后一条语句需要返回 table，实际返回的是: {{value}}', { value: table.toString() }))
                                 
+                                await pevals_ready
+                                await Promise.allSettled(pevals)
+                                
                                 subscriber.next({
                                     data: [
                                         new MutableDataFrame({
-                                            refId: query.refId,
+                                            refId,
                                             fields: this.convert(table)
                                         })
                                     ],
-                                    key: query.refId,
+                                    key: refId,
                                     state: LoadingState.Done
                                 })
                             } catch (error) {
                                 subscriber.error(error)
                             }
                         })()
-                })
-        })
-        
-        return merge(...streams)
+            })
+        }))
     }
     
     
