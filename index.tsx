@@ -212,9 +212,6 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                                 
                                 await this.connect()
                                 
-                                console.log(`${refId}.code:`)
-                                console.log(code_)
-                                
                                 let peval = this.ddb.eval<DdbTableObj>(code_)
                                 
                                 pevals.push(peval)
@@ -498,11 +495,14 @@ function ConfigEditor ({
     options,
     onOptionsChange
 }: DataSourcePluginOptionsEditorProps<DataSourceConfig>) {
-    options.jsonData.url ??= 'ws://127.0.0.1:8848'
-    options.jsonData.autologin ??= true
-    options.jsonData.username ??= 'admin'
-    options.jsonData.password ??= '123456'
-    options.jsonData.python ??= false
+    let { jsonData } = options
+    
+    jsonData.url ??= 'ws://127.0.0.1:8848'
+    jsonData.autologin ??= true
+    jsonData.username ??= 'admin'
+    jsonData.password ??= '123456'
+    jsonData.python ??= false
+    
     
     return <div className='gf-form-group'>
         <InlineField 
