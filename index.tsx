@@ -216,7 +216,7 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                                 let peval = this.ddb.eval<DdbTableObj>(code_)
                                 
                                 pevals.push(peval)
-                                if (pevals.length === request.targets.length)
+                                if (pevals.length === request.targets.filter(query => !query.is_streaming).length)
                                     pevals_ready.resolve()
                                 
                                 const table = await peval
