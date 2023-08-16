@@ -61,6 +61,9 @@ devDependencies:
   '@types/sass-loader':
     specifier: ^8.0.5
     version: 8.0.5
+  '@types/webpack-sources':
+    specifier: ^3.2.0
+    version: 3.2.0
   '@typescript-eslint/eslint-plugin':
     specifier: ^6.4.0
     version: 6.4.0(@typescript-eslint/parser@6.4.0)(eslint@8.47.0)(typescript@5.1.6)
@@ -79,6 +82,9 @@ devDependencies:
   eslint-plugin-xlint:
     specifier: ^1.0.6
     version: 1.0.6(eslint@8.47.0)(typescript@5.1.6)
+  license-webpack-plugin:
+    specifier: ^4.0.2
+    version: 4.0.2(webpack@5.88.2)
   react:
     specifier: ^18.2.0
     version: 18.2.0
@@ -5659,6 +5665,20 @@ packages:
     dependencies:
       prelude-ls: 1.2.1
       type-check: 0.4.0
+    dev: true
+
+  /license-webpack-plugin@4.0.2(webpack@5.88.2):
+    resolution: {integrity: sha512-771TFWFD70G1wLTC4oU2Cw4qvtmNrIw+wRvBtn+okgHl7slJVi7zfNcdmqDL72BojM30VNJ2UHylr1o77U37Jw==}
+    peerDependencies:
+      webpack: '*'
+    peerDependenciesMeta:
+      webpack:
+        optional: true
+      webpack-sources:
+        optional: true
+    dependencies:
+      webpack: 5.88.2
+      webpack-sources: 3.2.3
     dev: true
 
   /lines-and-columns@1.2.4:
