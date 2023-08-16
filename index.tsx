@@ -2,7 +2,7 @@ import './index.sass'
 
 import { default as React, useRef, useState, useEffect } from 'react'
 
-import { Observable, merge, Subscriber } from 'rxjs'
+import { Observable, merge } from 'rxjs'
 
 
 import { getTemplateSrv } from '@grafana/runtime'
