@@ -5,6 +5,7 @@
     },
     "type": "module",
     "scripts": {
+        "link": "tsc --project ./tsconfig.node.json && node ./link.js",
         "dev": "tsc --project ./tsconfig.node.json && node ./dev.js",
         "typecheck": "tsc --noEmit",
         "build": "tsc --project ./tsconfig.node.json && node ./build.js",

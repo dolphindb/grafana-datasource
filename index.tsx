@@ -170,6 +170,7 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                             })
                         } catch (error) {
                             subscriber.error(error)
+                            console.error(error)
                         }
                     })()
                     

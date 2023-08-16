@@ -1,8 +1,11 @@
 {
     "include": [
         "./index.tsx",
+        
         "./dev.ts",
         "./build.ts",
+        "./link.ts",
+        
         "./global.d.ts",
     ],
     
