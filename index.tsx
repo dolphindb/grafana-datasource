@@ -506,21 +506,18 @@ function ConfigEditor ({
     jsonData.python ??= false
     jsonData.verbose ??= false
     
-    function on_change (option: , checked?: boolean) {
+    function on_change (option: keyof DataSourceConfig, checked?: boolean) {
         return function (e) {
-            
+            onOptionsChange({
+                ...options,
+                jsonData: {
+                    ...options.jsonData,
+                    [option]: checked ? e.currentTarget.checked : e.currentTarget.value
+                }
+            })
         }
     }
     
-    function on_change (option: keyof DataSourceConfig, value: string | boolean) {
-        onOptionsChange({
-            ...options,
-            jsonData: {
-                ...options.jsonData,
-                [option]: value
-            }
-        })
-    }
     
     return <div className='gf-form-group'>
         <InlineField 
@@ -530,7 +527,7 @@ function ConfigEditor ({
         >
             <Input
                 value={options.jsonData.url}
-                onChange={on_change('url', true)}
+                onChange={on_change('url', false)}
             />
         </InlineField>
         <br/>
@@ -538,7 +535,7 @@ function ConfigEditor ({
         <InlineField tooltip={t('是否在建立连接后自动登录，默认 true')} label={t('自动登录')} labelWidth={12}>
             <InlineSwitch
                 value={options.jsonData.autologin}
-                onChange={e =>  on_change('autologin', e.currentTarget.checked)}
+                onChange={on_change('autologin', true)}
             />
         </InlineField>
         <br/>
@@ -547,7 +544,7 @@ function ConfigEditor ({
             <InlineField tooltip={t('DolphinDB 登录用户名')} label={t('用户名')} labelWidth={12}>
                 <Input
                     value={options.jsonData.username}
-                    onChange={e => on_change('username', e.currentTarget.value)}
+                    onChange={on_change('username', false)}
                 />
             </InlineField>
             <br />
@@ -558,7 +555,7 @@ function ConfigEditor ({
                 <Input
                     type='password'
                     value={options.jsonData.password}
-                    onChange={e => on_change('password', e.currentTarget.value)}
+                    onChange={on_change('password', false)}
                 />
             </InlineField>
             <br />
@@ -567,7 +564,7 @@ function ConfigEditor ({
         <InlineField tooltip={t('(需要 v2.10.0 以上的 DolphinDB Server) 使用 Python Parser 来解释执行脚本, 默认 false')} label='Python' labelWidth={12}>
             <InlineSwitch
                 value={options.jsonData.python}
-                onChange={e => on_change('python', e.currentTarget.checked)}
+                onChange={on_change('python', true)}
             />
         </InlineField>
         <br />
@@ -575,7 +572,7 @@ function ConfigEditor ({
         <InlineField tooltip={t('打印调试信息, 默认 false')} label='Verbose' labelWidth={12}>
             <InlineSwitch
                 value={options.jsonData.verbose}
-                onChange={e => on_change('verbose', e.currentTarget.checked)}
+                onChange={on_change('verbose', true)}
             />
         </InlineField>
         
