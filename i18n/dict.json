@@ -94,5 +94,14 @@
     },
     "(需要 v2.10.0 以上的 DolphinDB Server) 使用 Python Parser 来解释执行脚本, 默认 false": {
         "en": "(DolphinDB Server version must be above v2.10.0) Use Python Parser to interpret and execute scripts, the default is false"
+    },
+    "检测到 ddb 连接已断开，尝试建立新的连接到:": {
+        "en": "A broken ddb connection was detected, trying to establish a new connection to:"
+    },
+    "打印调试信息, 默认 false": {
+        "en": "Print debug information, default false"
+    },
+    "调试信息": {
+        "en": "Debug Information"
     }
 }

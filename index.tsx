@@ -569,7 +569,7 @@ function ConfigEditor ({
         </InlineField>
         <br />
         
-        <InlineField tooltip={t('打印调试信息, 默认 false')} label='Verbose' labelWidth={12}>
+        <InlineField tooltip={t('打印调试信息, 默认 false')} label={t('调试信息')} labelWidth={12}>
             <InlineSwitch
                 value={options.jsonData.verbose}
                 onChange={on_change('verbose', true)}
