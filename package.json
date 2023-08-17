@@ -34,7 +34,7 @@
         "@typescript-eslint/parser": "^6.4.0",
         "css-loader": "^6.8.1",
         "eslint": "^8.47.0",
-        "eslint-plugin-react": "^7.33.1",
+        "eslint-plugin-react": "^7.33.2",
         "eslint-plugin-xlint": "^1.0.6",
         "license-webpack-plugin": "^4.0.2",
         "react": "^18.2.0",
@@ -51,7 +51,7 @@
     },
     "dependencies": {
         "dayjs": "^1.11.9",
-        "dolphindb": "^2.0.1013",
+        "dolphindb": "^2.0.1014",
         "monaco-editor": "^0.41.0",
         "re-resizable": "^6.9.11",
         "rxjs": "7.8.0",
