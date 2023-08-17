@@ -216,7 +216,7 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                                 let peval = this.ddb.eval<DdbTableObj>(code_)
                                 
                                 pevals.push(peval)
-                                if (pevals.length === request.targets.filter(query => !query.is_streaming).length)
+                                if (pevals.length === request.targets.filter(({ is_streaming }) => !is_streaming).length)
                                     pevals_ready.resolve()
                                 
                                 const table = await peval
@@ -506,7 +506,13 @@ function ConfigEditor ({
     jsonData.python ??= false
     jsonData.verbose ??= false
     
-    const handleOptionChange = (option: keyof DataSourceConfig, value: string | boolean) => {
+    function on_change (option: , checked?: boolean) {
+        return function (e) {
+            
+        }
+    }
+    
+    function on_change (option: keyof DataSourceConfig, value: string | boolean) {
         onOptionsChange({
             ...options,
             jsonData: {
@@ -516,7 +522,6 @@ function ConfigEditor ({
         })
     }
     
-    
     return <div className='gf-form-group'>
         <InlineField 
             tooltip={t('数据库连接地址 (WebSocket URL), 如: ws://127.0.0.1:8848, wss://dolphindb.com (HTTPS 加密)')} 
@@ -525,7 +530,7 @@ function ConfigEditor ({
         >
             <Input
                 value={options.jsonData.url}
-                onChange={e => handleOptionChange('url', e.currentTarget.value)}
+                onChange={on_change('url', true)}
             />
         </InlineField>
         <br/>
@@ -533,7 +538,7 @@ function ConfigEditor ({
         <InlineField tooltip={t('是否在建立连接后自动登录，默认 true')} label={t('自动登录')} labelWidth={12}>
             <InlineSwitch
                 value={options.jsonData.autologin}
-                onChange={e =>  handleOptionChange('autologin', e.currentTarget.checked)}
+                onChange={e =>  on_change('autologin', e.currentTarget.checked)}
             />
         </InlineField>
         <br/>
@@ -542,7 +547,7 @@ function ConfigEditor ({
             <InlineField tooltip={t('DolphinDB 登录用户名')} label={t('用户名')} labelWidth={12}>
                 <Input
                     value={options.jsonData.username}
-                    onChange={e => handleOptionChange('username', e.currentTarget.value)}
+                    onChange={e => on_change('username', e.currentTarget.value)}
                 />
             </InlineField>
             <br />
@@ -553,7 +558,7 @@ function ConfigEditor ({
                 <Input
                     type='password'
                     value={options.jsonData.password}
-                    onChange={e => handleOptionChange('password', e.currentTarget.value)}
+                    onChange={e => on_change('password', e.currentTarget.value)}
                 />
             </InlineField>
             <br />
@@ -562,7 +567,7 @@ function ConfigEditor ({
         <InlineField tooltip={t('(需要 v2.10.0 以上的 DolphinDB Server) 使用 Python Parser 来解释执行脚本, 默认 false')} label='Python' labelWidth={12}>
             <InlineSwitch
                 value={options.jsonData.python}
-                onChange={e => handleOptionChange('python', e.currentTarget.checked)}
+                onChange={e => on_change('python', e.currentTarget.checked)}
             />
         </InlineField>
         <br />
@@ -570,7 +575,7 @@ function ConfigEditor ({
         <InlineField tooltip={t('打印调试信息, 默认 false')} label='Verbose' labelWidth={12}>
             <InlineSwitch
                 value={options.jsonData.verbose}
-                onChange={e => handleOptionChange('verbose', e.currentTarget.checked)}
+                onChange={e => on_change('verbose', e.currentTarget.checked)}
             />
         </InlineField>
         
