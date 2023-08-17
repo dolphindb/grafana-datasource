@@ -132,8 +132,13 @@ export class DataSource extends DataSourceApi<DdbDataQuery, DataSourceConfig> {
                         streaming: {
                             table,
                             action,
-                            handler: message => {
-                                const { data, colnames } = message
+                            handler: ({ data, colnames, error }) => {
+                                if (error) {
+                                    console.error(error)
+                                    subscriber.error(error)
+                                    return
+                                }
+                                
                                 const fields = this.convert(data, colnames)
                                 
                                 if (fields.length !== 0) {
