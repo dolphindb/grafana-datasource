@@ -507,12 +507,12 @@ function ConfigEditor ({
     jsonData.verbose ??= false
     
     function on_change (option: keyof DataSourceConfig, checked?: boolean) {
-        return function (e: React.FormEvent<HTMLInputElement>) {
+        return (event: React.FormEvent<HTMLInputElement>) => {
             onOptionsChange({
                 ...options,
                 jsonData: {
                     ...options.jsonData,
-                    [option]: checked ? e.currentTarget.checked : e.currentTarget.value
+                    [option]: checked ? event.currentTarget.checked : event.currentTarget.value
                 }
             })
         }
