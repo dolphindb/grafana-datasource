@@ -19,3 +19,4 @@ node_modules/
 /.vscode/launch.json
 
 /dolphindb-datasource.*.zip
+/grafana.plugin.*.zip

@@ -50,7 +50,8 @@ stdin.on('data', async function (key: any) {
 
 if (ramdisk) {
     const reconnecting_options: RemoteReconnectingOptions = {
-        func: 'register_ddb_gfn',
+        func: 'register',
+        args: ['ddb.gfn'],
         on_error (error: Error) {
             console.log(error.message)
         }
