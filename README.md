@@ -19,11 +19,10 @@ DolphindB has developed Grafana data source plug-in (DolphindB-Datasource), allo
 <img src='./demo.png' width='1200'>
 
 ## Installation
-### Method 1: Install Grafana and add plug -ins
-#### 1.1. Install Grafana
+#### 1. Install Grafana
 Go to Grafana official website: https://grafana.com/oss/grafana/ , install the latest open source version (OSS, Open-Source Software)
 
-#### 1.2. Install the dolphindb-datasource plugin
+#### 2. Install the dolphindb-datasource plugin
 In Releases (https://github.com/dolphindb/grafana-datasource/releases) download the latest version of the plugin zip, such as `dolphindb-datasource.v2.0.900.zip`
 
 Unzip the dolphindb-datasource folder in the compressed package to the plugin directory of grafana:
@@ -34,7 +33,7 @@ Unzip the dolphindb-datasource folder in the compressed package to the plugin di
 
 If the plugins level directory does not exist, you can manually create this folder
 
-#### 1.3. Modify the Grafana configuration file so that it allows to load the unsigned dolphindb-datasource plugin
+#### 3. Modify the Grafana configuration file so that it allows to load the unsigned dolphindb-datasource plugin
 Read the following documents to open and edit configuration files
 https://grafana.com/docs/grafana/latest/administration/configuration/#configuration-file-location
 
@@ -51,41 +50,11 @@ allow_loading_unsigned_plugins = dolphindb-datasource
 
 Note: Grafana needs to be restarted every time a configuration item is modified
 
-### 1.4. Restart the Grafana process or service
+### 4. Restart the Grafana process or service
 Open Task Manager > Services > Find Grafana Service > Right Click Restart
 
 https://grafana.com/docs/grafana/latest/installation/restart-grafana/
 
-
-### Method 2: Use Grafana Docker mirror containing dolphindb-datasource plugin
-
-Dolphindb integrates the DolphindB-DataSource plugin into a Docker mirror that can be quickly deployed through the Docker container to save too tedious configuration steps. The specific installation steps are as follows:
-
-#### 2.1. Download the configuration file [grafana.ini](./grafana.ini) to a certain path (this article is /ddbdocker/grafana.ini)
-
-#### 2.2. Execute the following command, pull the mirror image from the remote docker warehouse
-```shell
-docker pull dolphindb/dolphindb-grafana:9.1.0
-```
-
-#### 2.3. Execute the following command to create a container called ddb_gra:
-```shell
-docker run -itd --name ddb_gra \
-  -p 3000:3000 
-  -v /ddbdocker/grafana.ini:/etc/grafana/grafana.ini \
-  gra_ddb_ds:v1 sh
-```
-
-Parameter explanation:
- - --name: The container name created
- - --P: Map the ports of the container to the host to realize the service in the container through the host port. This article is the Grafana service
- - --V: Map the configured grafana.ini into the container and cover the original default Grafana.ini. If you need to use the default configuration in the container, you do not specify the -V parameter
- - -gra_ddb_ds: V1: Docker mirror name. Must be filled in a complete mirror name
-
-Expecting output (complete ID of the container):
-```
-3cdfbab788d0054a80c450e67d5273fb155e30b26a6ec6ef8821b832522474f5
-```
 
 ### Verify that the plugin is loaded
 You can see a log similar to the following in the grafana startup log

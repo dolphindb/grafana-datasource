@@ -19,11 +19,10 @@ DolphinDB 开发了 Grafana 数据源插件 (dolphindb-datasource)，让用户�
 <img src='./demo.png' width='1200'>
 
 ## 安装方法
-### 方法 1: 完整安装 Grafana 并添加插件
-#### 1.1. 安装 Grafana
+#### 1. 安装 Grafana
 前往 Grafana 官网: https://grafana.com/oss/grafana/ 下载并安装最新的开源版本 (OSS, Open-Source Software)
 
-#### 1.2. 安装 dolphindb-datasource 插件
+#### 2. 安装 dolphindb-datasource 插件
 在 [releases](https://github.com/dolphindb/grafana-datasource/releases) 中下载最新版本的插件压缩包，如 `dolphindb-datasource.v2.0.900.zip`
 
 将压缩包中的 dolphindb-datasource 文件夹解压到以下路径:
@@ -32,7 +31,7 @@ DolphinDB 开发了 Grafana 数据源插件 (dolphindb-datasource)，让用户�
 
 如果不存在 plugins 这一层目录，可以手动创建该文件夹
 
-#### 1.3. 修改 Grafana 配置文件，使其允许加载未签名的 dolphindb-datasource 插件
+#### 3. 修改 Grafana 配置文件，使其允许加载未签名的 dolphindb-datasource 插件
 阅读 https://grafana.com/docs/grafana/latest/administration/configuration/#configuration-file-location  
 打开并编辑配置文件： 
 
@@ -49,42 +48,10 @@ allow_loading_unsigned_plugins = dolphindb-datasource
 
 注：每次修改配置项后，需重启 Grafana
 
-#### 1.4. 重启 Grafana 进程或服务
+#### 4. 重启 Grafana 进程或服务
 打开任务管理器 > 服务 > 找到 Grafana 服务 > 右键重启
 
 https://grafana.com/docs/grafana/latest/installation/restart-grafana/
-
-
-### 方法 2: 使用包含 dolphindb-datasource 插件的 Grafana Docker 镜像
-
-DolphinDB 将包含 dolphindb-datasource 插件的 Grafana 集成为一个 Docker 镜像，可以通过 Docker 容器快速部署，节省过于繁琐的配置步骤。具体安装步骤如下：
-
-#### 2.1. 下载配置文件 [grafana.ini](./grafana.ini) 至某个路径（本文为 /ddbdocker/grafana.ini）
-
-#### 2.2. 执行如下命令，从远程 Docker 仓库拉取镜像
-```shell
-docker pull dolphindb/dolphindb-grafana:9.1.0
-```
-
-#### 2.3. 执行如下命令，创建一个名为 ddb_gra 的容器：
-```shell
-docker run -itd --name ddb_gra \
-  -p 3000:3000 
-  -v /ddbdocker/grafana.ini:/etc/grafana/grafana.ini \
-  gra_ddb_ds:v1 sh
-```
-
-参数解释：
-  - --name：所创建的容器名称
-  - -p：将容器的端口映射到宿主机上，以实现通过宿主机端口访问容器内的服务，本文为 Grafana 服务
-  - -v：将配置好的 grafana.ini 映射到容器内，并覆盖原有默认的 grafana.ini。如需使用容器内的默认配置，可不指定 -v 参数
-  - gra_ddb_ds:v1：Docker 镜像的名称。必须填入完整的镜像名称
-
-预期输出（容器的完整 id）：
-
-```
-3cdfbab788d0054a80c450e67d5273fb155e30b26a6ec6ef8821b832522474f5
-```
 
 
 ### 验证已加载插件
